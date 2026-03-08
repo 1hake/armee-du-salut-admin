@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #F5F3EE;
+  --color-surface: #FFFFFF;
+  --color-border: #D8D3C8;
+  --color-ink: #1A1916;
+  --color-muted: #8A8478;
+  --color-morning: #EEF4FF;
+  --color-afternoon: #FFF8EE;
+
+  --font-display: 'Syne', sans-serif;
+  --font-mono: 'DM Mono', monospace;
+}

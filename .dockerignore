@@ -1,0 +1,16 @@
+node_modules
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+*.md
+.vscode
+.idea
+dist
+.next
+coverage
+.claude
+sqlite.db
+sqlite.db-wal
+sqlite.db-shm

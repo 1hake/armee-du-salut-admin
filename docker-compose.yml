@@ -1,0 +1,10 @@
+services:
+  app:
+    image: thegobc/ads
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    environment:
+      NODE_ENV: development
+      PORT: 3000
