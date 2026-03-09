@@ -12,6 +12,7 @@ import { getWeekKey } from '@/lib/weekUtils'
 import type { Employee } from '@/server/schema'
 import type { GeneratedSchedule } from '@/lib/schedulerEngine'
 import { useToast, ToastContainer } from '@/components/Toast'
+import { exportEquipeToExcel } from '@/lib/exportEquipeExcel'
 import { GenerateForm } from './GenerateForm'
 import { ScheduleGrid } from './ScheduleGrid'
 import { ScheduleSummary } from './ScheduleSummary'
@@ -101,11 +102,19 @@ export function EquipeClient({ initialEmployees }: Props) {
         <div className="space-y-6">
           {schedule && (
             <>
-              <ScheduleSummary
-                summary={schedule.summary}
-                violations={schedule.violations}
-                weeks={schedule.weeks.length}
-              />
+              <div className="flex items-center justify-between">
+                <ScheduleSummary
+                  summary={schedule.summary}
+                  violations={schedule.violations}
+                  weeks={schedule.weeks.length}
+                />
+                <button
+                  onClick={() => exportEquipeToExcel(schedule)}
+                  className="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors flex-shrink-0 h-fit"
+                >
+                  Télécharger Excel
+                </button>
+              </div>
               <ScheduleGrid schedule={schedule} />
             </>
           )}
