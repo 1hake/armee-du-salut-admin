@@ -22,13 +22,16 @@ FROM node:22-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install wget for healthcheck
-RUN apk add --no-cache wget
+# Runtime dependencies for better-sqlite3 native addon and healthcheck
+RUN apk add --no-cache wget libstdc++
 
-# Copy standalone output
+# Copy standalone output (includes node_modules for serverExternalPackages)
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
+
+# Ensure sqlite data directory exists
+RUN mkdir -p /app/sqlite-data
 
 EXPOSE 3000
 CMD ["node", "server.js"]
