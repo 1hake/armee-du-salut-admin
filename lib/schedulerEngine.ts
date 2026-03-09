@@ -190,13 +190,17 @@ function assignShift(
 //    - Works Mon–Wed + Sat–Sun = 5 days × 7h = 35h
 //    - Rests Thu–Fri (2 consecutive rest days) ✓
 //
-// 2. NORMAL WEEK:
+// 2. RECOVERY WEEK (follows a weekend week):
+//    - Rests Mon (breaks cross-week streak Sun→Mon)
+//    - Works Tue–Fri = 4 days × 7h = 28h
+//    - Rests Sat–Sun (2 consecutive rest days) ✓
+//
+// 3. NORMAL WEEK:
 //    - Works Mon–Fri = 5 days × 7h = 35h
 //    - Rests Sat–Sun (2 consecutive rest days) ✓
 //
-// Every week = 35h, no recovery week needed ✓
 // 2 consecutive rest days guaranteed every week ✓
-// Max consecutive work days across weeks: 6 (Sun→Fri or Sat→Thu) ✓
+// Max consecutive work days: 3 (weekend week) or 4 (recovery week) ✓
 
 export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
   const { employees, startDate } = options
@@ -212,6 +216,11 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
   const matinCount = new Map<string, number>()
   const apremCount = new Map<string, number>()
 
+  // Pre-initialize with the LAST week's weekend pair to simulate cycle wrap-around.
+  // This ensures employees who work the last weekend get recovery in week 1.
+  const lastPair = weekendRotation[weeks - 1]
+  let prevWeekendWorkerIds = new Set<string>(lastPair)
+
   const allWeeks: WeekSchedule[] = []
 
   for (let w = 0; w < weeks; w++) {
@@ -220,10 +229,14 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
     const [ww1, ww2] = weekendRotation[w]
     const weekendWorkerSet = new Set([ww1, ww2])
 
+    // Recovery: employees who worked LAST weekend rest Monday this week
+    const recoverySet = new Set(prevWeekendWorkerIds)
+
     const employeeWeeks: EmployeeWeek[] = []
 
     for (const emp of employees) {
       const isWeekendWorker = weekendWorkerSet.has(emp.id)
+      const needsRecovery = recoverySet.has(emp.id)
 
       const days: EmployeeDay[] = []
 
@@ -238,6 +251,20 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
             days.push({ date, dayIndex: d, status: 'weekend_work', shift, hours: HOURS_PER_DAY })
           } else if (d >= 3) {
             // Thu (3) + Fri (4) = rest (2 consecutive rest days)
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
+          } else if (needsRecovery && d === 0) {
+            // Also rest Monday if recovering from last weekend
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
+          } else {
+            const shift = assignShift(matinCount, apremCount, emp.id)
+            days.push({ date, dayIndex: d, status: 'work', shift, hours: HOURS_PER_DAY })
+          }
+        } else if (needsRecovery) {
+          // RECOVERY WEEK: rest Monday + Sat–Sun, work Tue–Fri
+          if (isWeekend) {
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
+          } else if (d === 0) {
+            // Monday rest to break Sun→Mon streak
             days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
           } else {
             const shift = assignShift(matinCount, apremCount, emp.id)
@@ -266,6 +293,9 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
     }
 
     allWeeks.push({ weekKey, weekendWorkerIds: [ww1, ww2], employees: employeeWeeks })
+
+    // Update for next iteration
+    prevWeekendWorkerIds = weekendWorkerSet
   }
 
   const violations = detectViolations(allWeeks, employeeMap)
