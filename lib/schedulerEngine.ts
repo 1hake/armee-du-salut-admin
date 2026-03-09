@@ -38,7 +38,7 @@ export interface WeekSchedule {
 export interface Violation {
   employeeId: string
   employeeName: string
-  type: 'consecutive_days' | 'hours_mismatch'
+  type: 'consecutive_days' | 'hours_mismatch' | 'insufficient_consecutive_rest'
   message: string
   dates?: string[]
 }
@@ -187,19 +187,16 @@ function assignShift(
 // Schedule rules:
 //
 // 1. WEEKEND WEEK (employee works Sat+Sun):
-//    - Works Mon–Thu + Sat–Sun = 6 days × 7h = 42h
-//    - Rests Friday (prevents streak within week: max 4 consecutive)
+//    - Works Mon–Wed + Sat–Sun = 5 days × 7h = 35h
+//    - Rests Thu–Fri (2 consecutive rest days) ✓
 //
-// 2. RECOVERY WEEK (follows a weekend week):
-//    - Rests Monday (prevents cross-week streak: Sun→Tue, max 4)
-//    - Works Tue–Fri = 4 days × 7h = 28h
-//
-// 3. NORMAL WEEK:
+// 2. NORMAL WEEK:
 //    - Works Mon–Fri = 5 days × 7h = 35h
-//    - Rests Sat–Sun
+//    - Rests Sat–Sun (2 consecutive rest days) ✓
 //
-// Average: weekend(42h) + recovery(28h) = 70h / 2 weeks = 35h/week ✓
-// Max consecutive work days: 4 (never exceeds 6) ✓
+// Every week = 35h, no recovery week needed ✓
+// 2 consecutive rest days guaranteed every week ✓
+// Max consecutive work days across weeks: 6 (Sun→Fri or Sat→Thu) ✓
 
 export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
   const { employees, startDate } = options
@@ -215,11 +212,6 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
   const matinCount = new Map<string, number>()
   const apremCount = new Map<string, number>()
 
-  // Pre-initialize with the LAST week's weekend pair to simulate cycle wrap-around.
-  // This ensures employees who work the last weekend get recovery in week 1.
-  const lastPair = weekendRotation[weeks - 1]
-  let prevWeekendWorkerIds = new Set<string>(lastPair)
-
   const allWeeks: WeekSchedule[] = []
 
   for (let w = 0; w < weeks; w++) {
@@ -228,14 +220,10 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
     const [ww1, ww2] = weekendRotation[w]
     const weekendWorkerSet = new Set([ww1, ww2])
 
-    // Recovery: employees who worked LAST weekend rest Monday this week
-    const recoverySet = new Set(prevWeekendWorkerIds)
-
     const employeeWeeks: EmployeeWeek[] = []
 
     for (const emp of employees) {
       const isWeekendWorker = weekendWorkerSet.has(emp.id)
-      const needsRecovery = recoverySet.has(emp.id)
 
       const days: EmployeeDay[] = []
 
@@ -244,32 +232,19 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
         const isWeekend = d >= 5
 
         if (isWeekendWorker) {
-          // WEEKEND WEEK: work Mon–Thu + Sat–Sun, rest Friday
+          // WEEKEND WEEK: work Mon–Wed + Sat–Sun, rest Thu–Fri
           if (isWeekend) {
             const shift = assignShift(matinCount, apremCount, emp.id)
             days.push({ date, dayIndex: d, status: 'weekend_work', shift, hours: HOURS_PER_DAY })
-          } else if (d === 4) {
-            // Friday = rest
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
-          } else if (needsRecovery && d === 0) {
-            // Also rest Monday if recovering from last weekend
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
-          } else {
-            const shift = assignShift(matinCount, apremCount, emp.id)
-            days.push({ date, dayIndex: d, status: 'work', shift, hours: HOURS_PER_DAY })
-          }
-        } else if (needsRecovery) {
-          // RECOVERY WEEK: rest Monday, work Tue–Fri, rest Sat–Sun
-          if (isWeekend) {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
-          } else if (d === 0) {
+          } else if (d >= 3) {
+            // Thu (3) + Fri (4) = rest (2 consecutive rest days)
             days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
           } else {
             const shift = assignShift(matinCount, apremCount, emp.id)
             days.push({ date, dayIndex: d, status: 'work', shift, hours: HOURS_PER_DAY })
           }
         } else {
-          // NORMAL WEEK: Mon–Fri work, Sat–Sun rest
+          // NORMAL WEEK: Mon–Fri work, Sat–Sun rest (2 consecutive rest days)
           if (isWeekend) {
             days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
           } else {
@@ -291,9 +266,6 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
     }
 
     allWeeks.push({ weekKey, weekendWorkerIds: [ww1, ww2], employees: employeeWeeks })
-
-    // Update for next iteration
-    prevWeekendWorkerIds = weekendWorkerSet
   }
 
   const violations = detectViolations(allWeeks, employeeMap)
@@ -321,6 +293,9 @@ function detectViolations(
   }
 
   for (const [empId, days] of employeeDays) {
+    const empName = employeeMap.get(empId) ?? empId
+
+    // Check max consecutive work days (max 6)
     let streak = 0
     let streakStart = 0
 
@@ -331,14 +306,38 @@ function detectViolations(
         if (streak === 7) {
           violations.push({
             employeeId: empId,
-            employeeName: employeeMap.get(empId) ?? empId,
+            employeeName: empName,
             type: 'consecutive_days',
-            message: `${employeeMap.get(empId)} travaille ${streak}+ jours consecutifs (max 6)`,
+            message: `${empName} travaille ${streak}+ jours consécutifs (max 6)`,
             dates: days.slice(streakStart, i + 1).map((d) => d.date),
           })
         }
       } else {
         streak = 0
+      }
+    }
+
+    // Check at least 2 consecutive rest days per week (7-day window)
+    for (let weekStart = 0; weekStart + 6 < days.length; weekStart += 7) {
+      const weekDays = days.slice(weekStart, weekStart + 7)
+      let maxConsecutiveRest = 0
+      let currentRest = 0
+      for (const day of weekDays) {
+        if (day.status === 'rest') {
+          currentRest++
+          if (currentRest > maxConsecutiveRest) maxConsecutiveRest = currentRest
+        } else {
+          currentRest = 0
+        }
+      }
+      if (maxConsecutiveRest < 2) {
+        violations.push({
+          employeeId: empId,
+          employeeName: empName,
+          type: 'insufficient_consecutive_rest',
+          message: `${empName} n'a pas 2 jours de repos consécutifs (semaine du ${weekDays[0].date})`,
+          dates: weekDays.map((d) => d.date),
+        })
       }
     }
   }

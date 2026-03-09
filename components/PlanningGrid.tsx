@@ -159,7 +159,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                 {/* Room name */}
                 <div className="group/room border-r border-b border-border/60 px-2 sm:px-2.5 py-1.5 flex items-center gap-1">
                   <div className="min-w-0">
-                    <div className="text-[12px] sm:text-[13px] font-medium truncate">{room.name}</div>
+                    <div className="text-[12px] sm:text-[13px] font-medium">{room.name}</div>
                     <CapacityEditor
                       room={room}
                       onSave={(capacity) => onUpdateCapacity(room.id, capacity)}

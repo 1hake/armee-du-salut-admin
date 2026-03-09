@@ -13,7 +13,7 @@ export function BookingChip({ organisation, customColors, onDelete }: Props) {
 
   return (
     <span
-      className="group relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] sm:text-[10px] font-medium leading-tight max-w-full"
+      className="group relative inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] sm:text-xs font-medium leading-tight max-w-full"
       style={{ backgroundColor: bg, color }}
     >
       <span className="truncate">{organisation}</span>
