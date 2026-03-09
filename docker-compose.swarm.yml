@@ -34,11 +34,7 @@ services:
     volumes:
       - sqlite-data:/app/sqlite-data
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+      disable: true
     networks:
       - webnet
 
