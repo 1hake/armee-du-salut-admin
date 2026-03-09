@@ -21,6 +21,8 @@ RUN npm run build
 FROM node:22-alpine AS production
 WORKDIR /app
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
 # Runtime dependencies for better-sqlite3 native addon and healthcheck
 RUN apk add --no-cache wget libstdc++
