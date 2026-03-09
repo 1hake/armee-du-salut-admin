@@ -46,8 +46,8 @@ export function ScheduleSummary({ summary, violations, weeks }: Props) {
           </thead>
           <tbody>
             {summary.map((s) => {
-              const avgHoursPerWeek = weeks > 0 ? (s.totalHours / weeks).toFixed(1) : '0'
-              const hoursOk = Math.abs(s.totalHours / weeks - HOURS_PER_WEEK) <= 1
+              const avgHoursPerWeek = s.avgHoursPerWeek.toFixed(1)
+              const hoursOk = Math.abs(s.avgHoursPerWeek - HOURS_PER_WEEK) <= 1
               return (
                 <tr key={s.employeeId} className="border-b border-border/40 last:border-0 hover:bg-bg/30 transition-colors">
                   <td className="px-3.5 py-2.5 font-medium">{s.employeeName}</td>
