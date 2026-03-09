@@ -29,8 +29,8 @@ export function ScheduleSummary({ summary, violations, weeks }: Props) {
       )}
 
       {/* Summary table */}
-      <div className="border border-border rounded-lg bg-surface overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="border border-border rounded-lg bg-surface overflow-x-auto -mx-2 sm:mx-0">
+        <table className="w-full text-sm min-w-[500px]">
           <thead>
             <tr className="border-b border-border bg-bg/50">
               <th className="text-left px-3 py-2 text-xs font-medium text-muted">Salarie</th>

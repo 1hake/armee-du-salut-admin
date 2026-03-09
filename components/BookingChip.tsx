@@ -12,7 +12,7 @@ export function BookingChip({ organisation, onDelete }: Props) {
 
   return (
     <span
-      className="group relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium leading-tight max-w-full"
+      className="group relative inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] sm:text-[10px] font-medium leading-tight max-w-full"
       style={{ backgroundColor: bg, color }}
     >
       <span className="truncate">{organisation}</span>
@@ -21,7 +21,7 @@ export function BookingChip({ organisation, onDelete }: Props) {
           e.stopPropagation()
           onDelete()
         }}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-current hover:opacity-70 flex-shrink-0"
+        className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-current hover:opacity-70 flex-shrink-0"
         aria-label={`Supprimer ${organisation}`}
       >
         &times;

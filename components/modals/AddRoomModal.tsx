@@ -15,9 +15,9 @@ export function AddRoomModal({ onConfirm, onClose }: Props) {
   const [capacity, setCapacity] = useState('')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={onClose}>
       <div
-        className="bg-surface rounded-lg shadow-lg p-6 w-full max-w-sm"
+        className="bg-surface rounded-t-xl sm:rounded-lg shadow-lg p-5 sm:p-6 w-full sm:max-w-sm"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="font-display text-lg font-bold mb-4">Ajouter une salle</h2>

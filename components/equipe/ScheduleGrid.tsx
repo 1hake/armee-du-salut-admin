@@ -61,10 +61,10 @@ export function ScheduleGrid({ schedule }: Props) {
       </div>
 
       {/* Grid */}
-      <div className="border border-border rounded-lg bg-surface overflow-hidden">
+      <div className="border border-border rounded-lg bg-surface overflow-x-auto -mx-2 sm:mx-0">
         <div
-          className="grid"
-          style={{ gridTemplateColumns: '120px repeat(7, 1fr)' }}
+          className="grid min-w-[600px]"
+          style={{ gridTemplateColumns: '100px repeat(7, 1fr)' }}
         >
           {/* Header: day names + dates */}
           <div className="border-b border-r border-border bg-bg/50 px-2 py-2 text-xs font-medium text-muted" />

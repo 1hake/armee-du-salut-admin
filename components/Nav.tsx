@@ -13,7 +13,7 @@ export function Nav() {
 
   return (
     <nav className="border-b border-border bg-surface">
-      <div className="max-w-[1400px] mx-auto px-4 flex gap-0">
+      <div className="max-w-[1400px] mx-auto px-2 sm:px-4 flex gap-0">
         {TABS.map((tab) => {
           const isActive = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href)
           return (

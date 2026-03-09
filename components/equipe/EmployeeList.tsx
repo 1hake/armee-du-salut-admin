@@ -28,7 +28,7 @@ export function EmployeeList({ employees, onAdd, onDelete }: Props) {
             <span>{emp.name}</span>
             <button
               onClick={() => onDelete(emp.id)}
-              className="opacity-0 group-hover:opacity-100 text-muted hover:text-red-500 transition-opacity"
+              className="sm:opacity-0 sm:group-hover:opacity-100 text-muted hover:text-red-500 transition-opacity"
             >
               &times;
             </button>

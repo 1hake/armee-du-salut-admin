@@ -75,14 +75,14 @@ export function EquipeClient({ initialEmployees }: Props) {
   })
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-6">
-      <h1 className="font-display text-2xl font-bold tracking-tight mb-6">
+    <div className="max-w-[1400px] mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight mb-4 sm:mb-6">
         Planning equipe
       </h1>
 
-      <div className="grid grid-cols-[300px_1fr] gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 sm:gap-6">
         {/* Left sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <EmployeeList
             employees={employees}
             onAdd={(name) => addEmployeeMutation.mutate(name)}
@@ -99,7 +99,7 @@ export function EquipeClient({ initialEmployees }: Props) {
         </div>
 
         {/* Main content */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {schedule && (
             <>
               <div className="flex items-center justify-between">
@@ -120,7 +120,7 @@ export function EquipeClient({ initialEmployees }: Props) {
           )}
 
           {!schedule && (
-            <div className="border border-border rounded-lg bg-surface p-12 text-center text-muted">
+            <div className="border border-border rounded-lg bg-surface p-6 sm:p-12 text-center text-muted">
               Configurez les parametres et generez le planning
             </div>
           )}

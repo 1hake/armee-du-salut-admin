@@ -120,7 +120,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
   const allOrgs = [...new Set(bookingsData.map((b) => b.organisation))]
 
   return (
-    <div className="max-w-[1400px] mx-auto px-4 py-6">
+    <div className="max-w-[1400px] mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <Header
         weekKey={currentWeekKey}
         onPrev={() => setCurrentWeekKey((k) => shiftWeek(k, -1))}

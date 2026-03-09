@@ -48,10 +48,10 @@ export function PlanningGrid({ rooms, bookings, weekKey, onSlotClick, onDeleteBo
   }
 
   return (
-    <div className="overflow-x-auto border border-border rounded-lg bg-surface">
+    <div className="overflow-x-auto -mx-2 sm:mx-0 border border-border rounded-lg bg-surface">
       <div
-        className="grid min-w-[1100px]"
-        style={{ gridTemplateColumns: '70px 160px repeat(14, 1fr)' }}
+        className="grid min-w-[900px]"
+        style={{ gridTemplateColumns: '50px 120px repeat(14, 1fr)' }}
       >
         {/* Header row 1: day names */}
         <div className="col-span-2 border-b border-r border-border" />
@@ -108,16 +108,16 @@ export function PlanningGrid({ rooms, bookings, weekKey, onSlotClick, onDeleteBo
                 )}
 
                 {/* Room name */}
-                <div className="group/room border-r border-b border-border px-2 py-1.5 flex items-center gap-1">
+                <div className="group/room border-r border-b border-border px-1.5 sm:px-2 py-1 sm:py-1.5 flex items-center gap-1">
                   <div className="min-w-0">
-                    <div className="text-xs font-medium truncate">{room.name}</div>
+                    <div className="text-[11px] sm:text-xs font-medium truncate">{room.name}</div>
                     {room.capacity != null && (
                       <div className="text-[10px] text-muted">{room.capacity} pers.</div>
                     )}
                   </div>
                   <button
                     onClick={() => onDeleteRoom(room.id)}
-                    className="opacity-0 group-hover/room:opacity-100 transition-opacity text-muted hover:text-red-500 flex-shrink-0 ml-auto"
+                    className="sm:opacity-0 sm:group-hover/room:opacity-100 transition-opacity text-muted hover:text-red-500 flex-shrink-0 ml-auto"
                     aria-label={`Supprimer ${room.name}`}
                   >
                     &times;

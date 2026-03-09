@@ -18,15 +18,26 @@ export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrev
   const label = fmtWeekLabel(days)
 
   return (
-    <header className="flex items-center justify-between mb-4">
-      <h1 className="font-display text-2xl font-bold tracking-tight">
-        Plan d&apos;occupation des salles
-      </h1>
+    <header className="mb-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight">
+          Plan d&apos;occupation des salles
+        </h1>
 
-      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button
+            onClick={onAddRoom}
+            className="px-2.5 py-1.5 text-sm bg-ink text-bg rounded-md hover:opacity-90 transition-opacity"
+          >
+            + Salle
+          </button>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
         <button
           onClick={onToday}
-          className="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors"
+          className="px-2.5 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors"
         >
           Aujourd&apos;hui
         </button>
@@ -39,7 +50,7 @@ export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrev
           >
             &larr;
           </button>
-          <span className="px-3 text-sm font-medium min-w-[200px] text-center">
+          <span className="px-2 text-sm font-medium min-w-[160px] sm:min-w-[200px] text-center">
             {label}
           </span>
           <button
@@ -53,7 +64,7 @@ export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrev
 
         <button
           onClick={onCopyPrevWeek}
-          className="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors"
+          className="px-2.5 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors"
           title="Copier les réservations de la semaine précédente"
         >
           Copier sem. prec.
@@ -61,17 +72,10 @@ export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrev
 
         <button
           onClick={onExportExcel}
-          className="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors"
+          className="px-2.5 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors"
           title="Télécharger le planning en Excel"
         >
-          Télécharger Excel
-        </button>
-
-        <button
-          onClick={onAddRoom}
-          className="px-3 py-1.5 text-sm bg-ink text-bg rounded-md hover:opacity-90 transition-opacity"
-        >
-          + Salle
+          Excel
         </button>
       </div>
     </header>
