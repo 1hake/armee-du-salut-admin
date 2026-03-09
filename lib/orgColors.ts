@@ -1,4 +1,4 @@
-const PALETTE = [
+export const PALETTE = [
   { color: '#2563EB', bg: '#DBEAFE' },
   { color: '#16A34A', bg: '#DCFCE7' },
   { color: '#DC2626', bg: '#FEE2E2' },
@@ -15,6 +15,7 @@ function hashOrg(name: string): number {
   return name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0)
 }
 
-export function getOrgColor(name: string) {
+export function getOrgColor(name: string, customColors?: Record<string, { color: string; bg: string }>) {
+  if (customColors && customColors[name]) return customColors[name]
   return PALETTE[hashOrg(name) % PALETTE.length]
 }

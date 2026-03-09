@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { parseWeekKey, getWeekDays, fmtDay, getWeekKey } from '@/lib/weekUtils'
 import type { Room, Booking } from '@/server/schema'
 import { SlotCell } from './SlotCell'
@@ -8,14 +9,63 @@ interface Props {
   rooms: Room[]
   bookings: Booking[]
   weekKey: string
+  customColors?: Record<string, { color: string; bg: string }>
   onSlotClick: (roomId: string, dayIndex: number, slot: number) => void
   onDeleteBooking: (id: string) => void
   onDeleteRoom: (id: string) => void
+  onUpdateCapacity: (id: string, capacity: number | null) => void
 }
 
 const FLOORS_ORDER = ['RDC', 'R+1', 'R+2', 'R+3']
 
-export function PlanningGrid({ rooms, bookings, weekKey, onSlotClick, onDeleteBooking, onDeleteRoom }: Props) {
+function CapacityEditor({ room, onSave }: { room: Room; onSave: (capacity: number | null) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(room.capacity?.toString() ?? '')
+
+  if (editing) {
+    return (
+      <input
+        type="number"
+        min="0"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => {
+          const num = parseInt(value)
+          onSave(isNaN(num) || num <= 0 ? null : num)
+          setEditing(false)
+        }}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            const num = parseInt(value)
+            onSave(isNaN(num) || num <= 0 ? null : num)
+            setEditing(false)
+          }
+          if (e.key === 'Escape') setEditing(false)
+        }}
+        className="w-14 text-[10px] border border-accent/30 rounded-md px-1.5 py-0.5 focus:outline-none focus:ring-2 focus:ring-accent/20 bg-white"
+        autoFocus
+        onClick={(e) => e.stopPropagation()}
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation()
+        setValue(room.capacity?.toString() ?? '')
+        setEditing(true)
+      }}
+      className="text-[10px] text-muted hover:text-accent transition-colors cursor-pointer"
+      title="Modifier la capacité"
+    >
+      {room.capacity != null ? `${room.capacity} pers.` : '+ capacité'}
+    </button>
+  )
+}
+
+export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotClick, onDeleteBooking, onDeleteRoom, onUpdateCapacity }: Props) {
   const monday = parseWeekKey(weekKey)
   const days = getWeekDays(monday)
   const todayKey = getWeekKey(new Date())
@@ -40,7 +90,6 @@ export function PlanningGrid({ rooms, bookings, weekKey, onSlotClick, onDeleteBo
       floorGroups.push({ floor, rooms: floorRooms })
     }
   }
-  // Add any floors not in FLOORS_ORDER
   for (const [floor, floorRooms] of floorMap) {
     if (!FLOORS_ORDER.includes(floor)) {
       floorGroups.push({ floor, rooms: floorRooms })
@@ -48,39 +97,39 @@ export function PlanningGrid({ rooms, bookings, weekKey, onSlotClick, onDeleteBo
   }
 
   return (
-    <div className="overflow-x-auto -mx-2 sm:mx-0 border border-border rounded-lg bg-surface">
+    <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-xl bg-surface shadow-sm border border-border/60">
       <div
         className="grid min-w-[900px]"
         style={{ gridTemplateColumns: '50px 120px repeat(14, 1fr)' }}
       >
         {/* Header row 1: day names */}
-        <div className="col-span-2 border-b border-r border-border" />
+        <div className="col-span-2 border-b border-r border-border/60" />
         {days.map((day, i) => (
           <div
             key={i}
-            className={`col-span-2 text-center text-xs font-medium py-2 border-b border-border ${
+            className={`col-span-2 text-center text-[13px] font-medium py-2.5 border-b border-border/60 ${
               i < 6 ? 'border-r' : ''
-            } ${i === todayDayIndex ? 'bg-blue-50/40' : ''}`}
+            } ${i === todayDayIndex ? 'bg-accent/5' : ''}`}
           >
             {fmtDay(day)}
           </div>
         ))}
 
         {/* Header row 2: matin/aprem */}
-        <div className="col-span-2 border-b border-r border-border" />
+        <div className="col-span-2 border-b border-r border-border/60" />
         {days.map((_, i) => (
           <div key={`slots-${i}`} className="contents">
             <div
-              className={`text-center text-[10px] uppercase tracking-wider py-1 border-b border-border text-muted ${
-                i === todayDayIndex ? 'bg-blue-50/40' : 'bg-morning'
+              className={`text-center text-[10px] uppercase tracking-wider py-1.5 border-b border-border/60 text-muted ${
+                i === todayDayIndex ? 'bg-accent/5' : 'bg-morning'
               }`}
             >
               Matin
             </div>
             <div
-              className={`text-center text-[10px] uppercase tracking-wider py-1 border-b border-border text-muted ${
+              className={`text-center text-[10px] uppercase tracking-wider py-1.5 border-b border-border/60 text-muted ${
                 i < 6 ? 'border-r' : ''
-              } ${i === todayDayIndex ? 'bg-blue-50/40' : 'bg-afternoon'}`}
+              } ${i === todayDayIndex ? 'bg-accent/5' : 'bg-afternoon'}`}
             >
               Après-m.
             </div>
@@ -92,35 +141,36 @@ export function PlanningGrid({ rooms, bookings, weekKey, onSlotClick, onDeleteBo
           <div key={floor} className="contents">
             {floorRooms.map((room, roomIdx) => (
               <div key={room.id} className="contents">
-                {/* Floor label (only for first room in floor) */}
+                {/* Floor label */}
                 {roomIdx === 0 && (
                   <div
-                    className="border-r border-b border-border flex items-center justify-center bg-bg/50"
+                    className="border-r border-b border-border/60 flex items-center justify-center bg-bg/40"
                     style={{
                       gridRow: `span ${floorRooms.length}`,
                       writingMode: 'vertical-rl',
                     }}
                   >
-                    <span className="text-xs font-bold text-muted rotate-180">
+                    <span className="text-[11px] font-semibold text-muted/80 rotate-180 tracking-wide">
                       {floor}
                     </span>
                   </div>
                 )}
 
                 {/* Room name */}
-                <div className="group/room border-r border-b border-border px-1.5 sm:px-2 py-1 sm:py-1.5 flex items-center gap-1">
+                <div className="group/room border-r border-b border-border/60 px-2 sm:px-2.5 py-1.5 flex items-center gap-1">
                   <div className="min-w-0">
-                    <div className="text-[11px] sm:text-xs font-medium truncate">{room.name}</div>
-                    {room.capacity != null && (
-                      <div className="text-[10px] text-muted">{room.capacity} pers.</div>
-                    )}
+                    <div className="text-[12px] sm:text-[13px] font-medium truncate">{room.name}</div>
+                    <CapacityEditor
+                      room={room}
+                      onSave={(capacity) => onUpdateCapacity(room.id, capacity)}
+                    />
                   </div>
                   <button
                     onClick={() => onDeleteRoom(room.id)}
                     className="sm:opacity-0 sm:group-hover/room:opacity-100 transition-opacity text-muted hover:text-red-500 flex-shrink-0 ml-auto"
                     aria-label={`Supprimer ${room.name}`}
                   >
-                    &times;
+                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
                   </button>
                 </div>
 
@@ -138,6 +188,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, onSlotClick, onDeleteBo
                           isToday={dayIndex === todayDayIndex}
                           isAfternoon={isAfternoon}
                           isLastDayAfternoon={isAfternoon && !isLastDay}
+                          customColors={customColors}
                           onClick={() => {
                             if (!booking) onSlotClick(room.id, dayIndex, slot)
                           }}

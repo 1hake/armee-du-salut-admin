@@ -37,9 +37,7 @@ export async function getScheduleEntries(startDate: string, endDate: string) {
 
 export async function generateAndSaveSchedule(
   startDate: string,
-  weeks: number,
-  weekdayHours: number,
-  weekendHours: number,
+  weeks?: number,
 ): Promise<GeneratedSchedule> {
   const emps = db.select().from(employees).orderBy(employees.position).all()
   if (emps.length < 2) throw new Error('Au moins 2 salariés requis')
@@ -50,14 +48,12 @@ export async function generateAndSaveSchedule(
     employees: engineEmployees,
     startDate,
     weeks,
-    weekdayHours,
-    weekendHours,
   })
 
   // Compute date range to clear
-  const startD = new Date(startDate)
+  const actualWeeks = schedule.weeks.length
   const endD = new Date(startDate)
-  endD.setDate(endD.getDate() + weeks * 7 - 1)
+  endD.setDate(endD.getDate() + actualWeeks * 7 - 1)
   const endDateStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, '0')}-${String(endD.getDate()).padStart(2, '0')}`
 
   // Delete existing entries in the date range

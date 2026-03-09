@@ -8,7 +8,6 @@ import {
   deleteEmployee,
   generateAndSaveSchedule,
 } from '@/server/equipeActions'
-import { getWeekKey } from '@/lib/weekUtils'
 import type { Employee } from '@/server/schema'
 import type { GeneratedSchedule } from '@/lib/schedulerEngine'
 import { useToast, ToastContainer } from '@/components/Toast'
@@ -58,15 +57,15 @@ export function EquipeClient({ initialEmployees }: Props) {
   })
 
   const generateMutation = useMutation({
-    mutationFn: (params: { startDate: string; weeks: number; weekdayHours: number; weekendHours: number }) =>
-      generateAndSaveSchedule(params.startDate, params.weeks, params.weekdayHours, params.weekendHours),
+    mutationFn: (params: { startDate: string; weeks?: number }) =>
+      generateAndSaveSchedule(params.startDate, params.weeks),
     onSuccess: (result) => {
       setSchedule(result)
       const violationCount = result.violations.length
       if (violationCount > 0) {
         toast.error(`Planning genere avec ${violationCount} alerte(s)`)
       } else {
-        toast.success('Planning genere avec succes')
+        toast.success(`Planning genere : cycle de ${result.cycleLength} semaines`)
       }
     },
     onError: (err) => {
@@ -75,14 +74,14 @@ export function EquipeClient({ initialEmployees }: Props) {
   })
 
   return (
-    <div className="max-w-[1400px] mx-auto px-2 sm:px-4 py-4 sm:py-6">
-      <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight mb-4 sm:mb-6">
+    <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-5 sm:py-8">
+      <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight mb-5 sm:mb-8">
         Planning equipe
       </h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 sm:gap-8">
         {/* Left sidebar */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-5">
           <EmployeeList
             employees={employees}
             onAdd={(name) => addEmployeeMutation.mutate(name)}
@@ -92,14 +91,15 @@ export function EquipeClient({ initialEmployees }: Props) {
           <GenerateForm
             disabled={employees.length < 2}
             loading={generateMutation.isPending}
-            onGenerate={(startDate, weeks, weekdayHours, weekendHours) =>
-              generateMutation.mutate({ startDate, weeks, weekdayHours, weekendHours })
+            employeeCount={employees.length}
+            onGenerate={(startDate, weeks) =>
+              generateMutation.mutate({ startDate, weeks })
             }
           />
         </div>
 
         {/* Main content */}
-        <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-5">
           {schedule && (
             <>
               <div className="flex items-center justify-between">
@@ -110,9 +110,9 @@ export function EquipeClient({ initialEmployees }: Props) {
                 />
                 <button
                   onClick={() => exportEquipeToExcel(schedule)}
-                  className="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors flex-shrink-0 h-fit"
+                  className="px-4 py-2 text-[13px] font-medium rounded-full border border-border hover:bg-surface transition-colors flex-shrink-0 h-fit active:scale-95"
                 >
-                  Télécharger Excel
+                  Export Excel
                 </button>
               </div>
               <ScheduleGrid schedule={schedule} />
@@ -120,7 +120,7 @@ export function EquipeClient({ initialEmployees }: Props) {
           )}
 
           {!schedule && (
-            <div className="border border-border rounded-lg bg-surface p-6 sm:p-12 text-center text-muted">
+            <div className="rounded-xl bg-surface border border-border/60 shadow-sm p-8 sm:p-16 text-center text-muted text-[15px]">
               Configurez les parametres et generez le planning
             </div>
           )}

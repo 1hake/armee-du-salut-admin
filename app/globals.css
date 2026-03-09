@@ -1,14 +1,66 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg: #F5F3EE;
+  --color-bg: #F5F5F7;
   --color-surface: #FFFFFF;
-  --color-border: #D8D3C8;
-  --color-ink: #1A1916;
-  --color-muted: #8A8478;
-  --color-morning: #EEF4FF;
-  --color-afternoon: #FFF8EE;
+  --color-border: #E5E5EA;
+  --color-ink: #1D1D1F;
+  --color-muted: #86868B;
+  --color-morning: #F0F4FF;
+  --color-afternoon: #FFF8F0;
+  --color-accent: #0071E3;
 
-  --font-display: 'Syne', sans-serif;
-  --font-mono: 'DM Mono', monospace;
+  --font-display: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Modal entrance animation */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-in {
+  animation: slide-up 0.2s ease-out;
+}
+
+/* Refined scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #C7C7CC;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A1A1A6;
+}
+
+/* Color picker input refinement */
+input[type="color"] {
+  -webkit-appearance: none;
+  border: none;
+  padding: 0;
+}
+
+input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 2px;
+}
+
+input[type="color"]::-webkit-color-swatch {
+  border: 1px solid #E5E5EA;
+  border-radius: 6px;
 }

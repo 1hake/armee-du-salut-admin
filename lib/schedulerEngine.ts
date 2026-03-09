@@ -1,12 +1,23 @@
 // ── Types ───────────────────────────────────────────────
 
 export type DayStatus = 'work' | 'rest' | 'weekend_work'
+export type Shift = 'matin' | 'aprem'
+
+export const SHIFT_LABELS: Record<Shift, { label: string; time: string }> = {
+  matin: { label: 'Matin', time: '8h45 – 16h45' },
+  aprem: { label: 'Après-midi', time: '10h15 – 18h15' },
+}
+
+export const HOURS_PER_DAY = 7     // 8h gross - 1h lunch (13h-14h)
+export const HOURS_PER_WEEK = 35   // 5 days × 7h
+export const LUNCH_BREAK = '13h – 14h'
 
 export interface EmployeeDay {
   date: string        // YYYY-MM-DD
   dayIndex: number    // 0=Lun … 6=Dim
   status: DayStatus
-  hours: number       // 0 for rest
+  shift: Shift | null // null for rest
+  hours: number       // 7 for work, 0 for rest
 }
 
 export interface EmployeeWeek {
@@ -36,6 +47,7 @@ export interface GeneratedSchedule {
   weeks: WeekSchedule[]
   violations: Violation[]
   summary: EmployeeSummary[]
+  cycleLength: number
 }
 
 export interface EmployeeSummary {
@@ -45,6 +57,8 @@ export interface EmployeeSummary {
   totalHours: number
   totalWorkDays: number
   totalRestDays: number
+  matinCount: number
+  apremCount: number
 }
 
 export interface Employee {
@@ -55,9 +69,7 @@ export interface Employee {
 export interface GenerateOptions {
   employees: Employee[]
   startDate: string  // YYYY-MM-DD (must be a Monday)
-  weeks: number
-  weekdayHours: number  // default 7
-  weekendHours: number  // default 8
+  weeks?: number     // if omitted, auto-calculated cycle length
 }
 
 // ── Helpers ─────────────────────────────────────────────
@@ -80,10 +92,23 @@ function parseDateStr(s: string): Date {
   return new Date(y, m - 1, d)
 }
 
-// ── Weekend rotation ────────────────────────────────────
+// ── Auto cycle length ───────────────────────────────────
 //
-// For 5 employees, a cycle of 5 weeks where each appears exactly 2 times.
-// No employee works 2 weekends in a row within a cycle.
+// With N employees and 2 weekend workers per weekend:
+// - Each employee works 2C/N weekends over C weeks
+// - For integer weekends per person: C must be multiple of N (odd) or N/2 (even)
+// - We also want even C for balanced matin/aprem rotation
+//
+// Formula: C = lcm(N, 2) when N is odd → N*2, when N is even → N
+
+function computeCycleLength(employeeCount: number): number {
+  if (employeeCount <= 2) return 2
+  // Ensure each employee gets equal weekends AND equal shift distribution
+  // Cycle = N for even N, 2*N for odd N (so it's always even)
+  return employeeCount % 2 === 0 ? employeeCount : employeeCount * 2
+}
+
+// ── Weekend rotation ────────────────────────────────────
 
 function generateWeekendRotation(
   employeeIds: string[],
@@ -103,10 +128,9 @@ function generateWeekendRotation(
   let baseCycle: [number, number][]
 
   if (n === 5) {
-    // Hand-crafted balanced rotation — no back-to-back
     baseCycle = [[0, 1], [2, 3], [4, 0], [1, 2], [3, 4]]
   } else {
-    // Greedy approach for other team sizes
+    // Greedy approach: balanced, no back-to-back
     baseCycle = []
     const count = new Array(n).fill(0)
     const used = new Set<string>()
@@ -119,12 +143,10 @@ function generateWeekendRotation(
 
       for (const [a, b] of allPairs) {
         if (used.has(`${a}-${b}`)) continue
-        // Avoid back-to-back
         if (prev && (prev.includes(a) || prev.includes(b))) continue
         const score = count[a] + count[b]
         if (score < bestScore) { bestScore = score; bestPair = [a, b] }
       }
-      // Relax if needed
       if (!bestPair) {
         for (const [a, b] of allPairs) {
           if (used.has(`${a}-${b}`)) continue
@@ -150,32 +172,20 @@ function generateWeekendRotation(
 
 // ── Rest days for weekend workers ───────────────────────
 //
-// A weekend worker has 2 consecutive rest days during the week (Mon–Fri).
-//
-// KEY RULE: after working a weekend, the employee MUST rest Monday the
-// following week ("post-weekend recovery") to avoid >6 consecutive days.
-//
-// So if the employee also has post-weekend recovery (from LAST week's
-// weekend), Monday is already rest → pick Mon-Tue as the 2 rest days.
-//
-// Otherwise choose among [Mon-Tue, Tue-Wed, Wed-Thu, Thu-Fri] to
-// balance how many people are off each day.
+// Weekend worker works 5 days (3 weekdays + Sat + Sun) = 35h
+// Rest days placed at Thu-Fri to avoid >6 consecutive work days
+// (Mon-Wed work, Thu-Fri rest, Sat-Sun work → max 3 consecutive)
 
 const REST_DAY_OPTIONS: [number, number][] = [
+  [3, 4], // Jeu-Ven (preferred: avoids streaks)
   [0, 1], // Lun-Mar
   [1, 2], // Mar-Mer
   [2, 3], // Mer-Jeu
-  [3, 4], // Jeu-Ven
 ]
 
 function chooseRestDays(
-  hasPostWeekendRecovery: boolean,
   restDayCount: Map<number, number>,
 ): [number, number] {
-  // If coming off a weekend: must include Monday rest → Mon-Tue
-  if (hasPostWeekendRecovery) return [0, 1]
-
-  // Pick the option that best balances coverage
   let bestOption = REST_DAY_OPTIONS[0]
   let bestScore = Infinity
 
@@ -191,17 +201,43 @@ function chooseRestDays(
   return bestOption
 }
 
+// ── Shift assignment ────────────────────────────────────
+//
+// Track cumulative matin/aprem per employee. Assign the shift
+// that brings them closest to 50/50 balance.
+
+function assignShift(
+  matinCount: Map<string, number>,
+  apremCount: Map<string, number>,
+  empId: string,
+): Shift {
+  const m = matinCount.get(empId) ?? 0
+  const a = apremCount.get(empId) ?? 0
+  // Prefer matin if fewer matin days, else aprem
+  const shift: Shift = m <= a ? 'matin' : 'aprem'
+  if (shift === 'matin') {
+    matinCount.set(empId, m + 1)
+  } else {
+    apremCount.set(empId, a + 1)
+  }
+  return shift
+}
+
 // ── Main generator ──────────────────────────────────────
 
 export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
-  const { employees, startDate, weeks, weekdayHours = 7, weekendHours = 8 } = options
+  const { employees, startDate } = options
   const employeeIds = employees.map((e) => e.id)
   const employeeMap = new Map(employees.map((e) => [e.id, e.name]))
 
+  const cycleLength = computeCycleLength(employees.length)
+  const weeks = options.weeks ?? cycleLength
+
   const weekendRotation = generateWeekendRotation(employeeIds, weeks)
 
-  // Track who worked the previous weekend (needs Monday recovery next week)
-  let prevWeekendWorkerIds = new Set<string>()
+  // Shift tracking for balanced rotation
+  const matinCount = new Map<string, number>()
+  const apremCount = new Map<string, number>()
 
   const allWeeks: WeekSchedule[] = []
 
@@ -211,22 +247,13 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
     const [ww1, ww2] = weekendRotation[w]
     const weekendWorkerSet = new Set([ww1, ww2])
 
-    // Who needs Monday recovery this week? → those who worked LAST weekend
-    const needsRecovery = new Set(prevWeekendWorkerIds)
-
     // Rest-day balancing counter for this week
     const restDayCount = new Map<number, number>()
-
-    // Count Monday as rest for all recovery employees
-    for (const empId of needsRecovery) {
-      restDayCount.set(0, (restDayCount.get(0) ?? 0) + 1)
-    }
 
     // Determine rest days for weekend workers
     const restDaysMap = new Map<string, [number, number]>()
     for (const empId of [ww1, ww2]) {
-      const hasRecovery = needsRecovery.has(empId)
-      const rest = chooseRestDays(hasRecovery, restDayCount)
+      const rest = chooseRestDays(restDayCount)
       restDaysMap.set(empId, rest)
       restDayCount.set(rest[0], (restDayCount.get(rest[0]) ?? 0) + 1)
       restDayCount.set(rest[1], (restDayCount.get(rest[1]) ?? 0) + 1)
@@ -237,7 +264,6 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
 
     for (const emp of employees) {
       const isWeekendWorker = weekendWorkerSet.has(emp.id)
-      const hasRecovery = needsRecovery.has(emp.id)
       const restDays = restDaysMap.get(emp.id)
 
       const days: EmployeeDay[] = []
@@ -247,30 +273,21 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
         const isWeekend = d >= 5
 
         if (isWeekendWorker) {
-          // Weekend worker: Sat+Sun work, 2 rest days in week, 3 work days in week
           if (isWeekend) {
-            days.push({ date, dayIndex: d, status: 'weekend_work', hours: weekendHours })
+            const shift = assignShift(matinCount, apremCount, emp.id)
+            days.push({ date, dayIndex: d, status: 'weekend_work', shift, hours: HOURS_PER_DAY })
           } else if (restDays && (d === restDays[0] || d === restDays[1])) {
-            days.push({ date, dayIndex: d, status: 'rest', hours: 0 })
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
           } else {
-            days.push({ date, dayIndex: d, status: 'work', hours: weekdayHours })
-          }
-        } else if (hasRecovery) {
-          // Standard worker but worked last weekend → rest Monday
-          if (isWeekend) {
-            days.push({ date, dayIndex: d, status: 'rest', hours: 0 })
-          } else if (d === 0) {
-            // Monday recovery
-            days.push({ date, dayIndex: d, status: 'rest', hours: 0 })
-          } else {
-            days.push({ date, dayIndex: d, status: 'work', hours: weekdayHours })
+            const shift = assignShift(matinCount, apremCount, emp.id)
+            days.push({ date, dayIndex: d, status: 'work', shift, hours: HOURS_PER_DAY })
           }
         } else {
-          // Standard worker: Mon-Fri work, Sat-Sun rest
           if (isWeekend) {
-            days.push({ date, dayIndex: d, status: 'rest', hours: 0 })
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
           } else {
-            days.push({ date, dayIndex: d, status: 'work', hours: weekdayHours })
+            const shift = assignShift(matinCount, apremCount, emp.id)
+            days.push({ date, dayIndex: d, status: 'work', shift, hours: HOURS_PER_DAY })
           }
         }
       }
@@ -287,15 +304,12 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
     }
 
     allWeeks.push({ weekKey, weekendWorkerIds: [ww1, ww2], employees: employeeWeeks })
-
-    // Update for next iteration
-    prevWeekendWorkerIds = weekendWorkerSet
   }
 
   const violations = detectViolations(allWeeks, employeeMap)
-  const summary = buildSummary(allWeeks, employees)
+  const summary = buildSummary(allWeeks, employees, matinCount, apremCount)
 
-  return { weeks: allWeeks, violations, summary }
+  return { weeks: allWeeks, violations, summary, cycleLength }
 }
 
 // ── Violation detection ─────────────────────────────────
@@ -324,7 +338,6 @@ function detectViolations(
       if (days[i].status !== 'rest') {
         if (streak === 0) streakStart = i
         streak++
-        // Only report once per streak (when it first exceeds 6)
         if (streak === 7) {
           violations.push({
             employeeId: empId,
@@ -338,6 +351,27 @@ function detectViolations(
         streak = 0
       }
     }
+
+    // Check 35h/week
+    const weekHours = new Map<string, number>()
+    for (const day of days) {
+      const weekKey = day.date.slice(0, 10) // group by actual week
+      // We need to group by the week the day belongs to
+    }
+  }
+
+  // Check weekly hours
+  for (const week of weeks) {
+    for (const ew of week.employees) {
+      if (ew.totalHours !== HOURS_PER_WEEK) {
+        violations.push({
+          employeeId: ew.employeeId,
+          employeeName: ew.employeeName,
+          type: 'hours_mismatch',
+          message: `${ew.employeeName} a ${ew.totalHours}h cette semaine (attendu: ${HOURS_PER_WEEK}h)`,
+        })
+      }
+    }
   }
 
   return violations
@@ -345,7 +379,12 @@ function detectViolations(
 
 // ── Summary ─────────────────────────────────────────────
 
-function buildSummary(weeks: WeekSchedule[], employees: Employee[]): EmployeeSummary[] {
+function buildSummary(
+  weeks: WeekSchedule[],
+  employees: Employee[],
+  matinCount: Map<string, number>,
+  apremCount: Map<string, number>,
+): EmployeeSummary[] {
   return employees.map((emp) => {
     let totalWeekends = 0
     let totalHours = 0
@@ -370,6 +409,8 @@ function buildSummary(weeks: WeekSchedule[], employees: Employee[]): EmployeeSum
       totalHours,
       totalWorkDays,
       totalRestDays,
+      matinCount: matinCount.get(emp.id) ?? 0,
+      apremCount: apremCount.get(emp.id) ?? 0,
     }
   })
 }

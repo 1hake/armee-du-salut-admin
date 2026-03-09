@@ -2,93 +2,105 @@
 
 import { useState } from 'react'
 import { getWeekKey } from '@/lib/weekUtils'
+import { HOURS_PER_DAY, HOURS_PER_WEEK, SHIFT_LABELS, LUNCH_BREAK } from '@/lib/schedulerEngine'
 
 interface Props {
   disabled: boolean
   loading: boolean
-  onGenerate: (startDate: string, weeks: number, weekdayHours: number, weekendHours: number) => void
+  employeeCount: number
+  onGenerate: (startDate: string, weeks?: number) => void
 }
 
-export function GenerateForm({ disabled, loading, onGenerate }: Props) {
+export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: Props) {
   const [startDate, setStartDate] = useState(() => getWeekKey(new Date()))
-  const [weeks, setWeeks] = useState(5)
-  const [weekdayHours, setWeekdayHours] = useState(7)
-  const [weekendHours, setWeekendHours] = useState(8)
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [useCustomWeeks, setUseCustomWeeks] = useState(false)
+  const [customWeeks, setCustomWeeks] = useState(5)
+
+  // Auto cycle: N for even, 2N for odd
+  const autoCycle = employeeCount <= 1 ? 2
+    : employeeCount % 2 === 0 ? employeeCount : employeeCount * 2
 
   return (
-    <div className="border border-border rounded-lg bg-surface p-4">
-      <h2 className="font-display text-sm font-bold mb-3">Generer le planning</h2>
+    <div className="rounded-xl bg-surface border border-border/60 shadow-sm p-4">
+      <h2 className="text-[13px] font-semibold mb-3">Generer le planning</h2>
+
+      {/* Shift info */}
+      <div className="rounded-lg bg-bg/50 border border-border/40 p-3 mb-4 space-y-1.5">
+        <div className="text-[11px] font-medium text-muted uppercase tracking-wider mb-1">Horaires</div>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-blue-400" />
+          <span className="text-[12px]">{SHIFT_LABELS.matin.label} : {SHIFT_LABELS.matin.time}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-amber-400" />
+          <span className="text-[12px]">{SHIFT_LABELS.aprem.label} : {SHIFT_LABELS.aprem.time}</span>
+        </div>
+        <div className="text-[11px] text-muted mt-1">
+          Pause dej : {LUNCH_BREAK} &middot; {HOURS_PER_DAY}h/jour &middot; {HOURS_PER_WEEK}h/semaine
+        </div>
+      </div>
 
       <div className="space-y-3">
         <div>
-          <label className="block text-xs font-medium text-muted mb-1">Semaine de debut (lundi)</label>
+          <label className="block text-[12px] font-medium text-muted mb-1.5">Semaine de debut (lundi)</label>
           <input
             type="date"
             value={startDate}
             onChange={(e) => setStartDate(e.target.value)}
-            className="w-full border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20"
+            className="w-full border border-border rounded-lg px-3 py-2 text-[13px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30 transition-all"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-muted mb-1">Nombre de semaines</label>
-          <select
-            value={weeks}
-            onChange={(e) => setWeeks(Number(e.target.value))}
-            className="w-full border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20"
-          >
-            {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
-              <option key={n} value={n}>{n} semaine{n > 1 ? 's' : ''}</option>
-            ))}
-          </select>
+          <label className="block text-[12px] font-medium text-muted mb-1.5">Duree du cycle</label>
+          <div className="flex items-center gap-2 mb-1.5">
+            <button
+              type="button"
+              onClick={() => setUseCustomWeeks(false)}
+              className={`flex-1 px-3 py-2 text-[12px] rounded-lg border transition-all ${
+                !useCustomWeeks ? 'border-ink bg-ink text-bg font-medium' : 'border-border hover:bg-bg'
+              }`}
+            >
+              Auto ({autoCycle} sem.)
+            </button>
+            <button
+              type="button"
+              onClick={() => setUseCustomWeeks(true)}
+              className={`flex-1 px-3 py-2 text-[12px] rounded-lg border transition-all ${
+                useCustomWeeks ? 'border-ink bg-ink text-bg font-medium' : 'border-border hover:bg-bg'
+              }`}
+            >
+              Personnalise
+            </button>
+          </div>
+          {!useCustomWeeks && (
+            <p className="text-[11px] text-muted">
+              Cycle optimal calcule pour {employeeCount} salaries : rotation equitable des weekends et horaires
+            </p>
+          )}
+          {useCustomWeeks && (
+            <select
+              value={customWeeks}
+              onChange={(e) => setCustomWeeks(Number(e.target.value))}
+              className="w-full border border-border rounded-lg px-3 py-2 text-[13px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30 transition-all"
+            >
+              {Array.from({ length: 20 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>{n} semaine{n > 1 ? 's' : ''}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         <button
-          type="button"
-          onClick={() => setShowAdvanced(!showAdvanced)}
-          className="text-xs text-muted hover:text-ink transition-colors"
-        >
-          {showAdvanced ? '▾' : '▸'} Parametres avances
-        </button>
-
-        {showAdvanced && (
-          <div className="space-y-3 pl-2 border-l-2 border-border">
-            <div>
-              <label className="block text-xs font-medium text-muted mb-1">Heures/jour semaine</label>
-              <input
-                type="number"
-                min={1}
-                max={12}
-                value={weekdayHours}
-                onChange={(e) => setWeekdayHours(Number(e.target.value))}
-                className="w-full border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-muted mb-1">Heures/jour weekend</label>
-              <input
-                type="number"
-                min={1}
-                max={12}
-                value={weekendHours}
-                onChange={(e) => setWeekendHours(Number(e.target.value))}
-                className="w-full border border-border rounded-md px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ink/20"
-              />
-            </div>
-          </div>
-        )}
-
-        <button
-          onClick={() => onGenerate(startDate, weeks, weekdayHours, weekendHours)}
+          onClick={() => onGenerate(startDate, useCustomWeeks ? customWeeks : undefined)}
           disabled={disabled || loading}
-          className="w-full px-3 py-2 text-sm bg-ink text-bg rounded-md hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="w-full px-4 py-2.5 text-[13px] font-medium bg-accent text-white rounded-full hover:brightness-110 transition-all disabled:opacity-30 active:scale-[0.98]"
         >
           {loading ? 'Generation...' : 'Generer le planning'}
         </button>
 
         {disabled && (
-          <p className="text-xs text-red-500">Au moins 2 salaries requis</p>
+          <p className="text-[12px] text-red-500">Au moins 2 salaries requis</p>
         )}
       </div>
     </div>

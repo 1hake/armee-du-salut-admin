@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from './db'
-import { rooms, bookings } from './schema'
+import { rooms, bookings, organisationColors } from './schema'
 import { eq } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
@@ -18,6 +18,11 @@ export async function addRoom(floor: string, name: string, capacity?: number) {
 
 export async function deleteRoom(id: string) {
   await db.delete(rooms).where(eq(rooms.id, id))
+  revalidatePath('/')
+}
+
+export async function updateRoom(id: string, data: { capacity?: number | null }) {
+  await db.update(rooms).set(data).where(eq(rooms.id, id))
   revalidatePath('/')
 }
 
@@ -45,6 +50,32 @@ export async function deleteBooking(id: string) {
   revalidatePath('/')
 }
 
+// ── Organisation Colors ───────────────────────────────
+export async function getOrgColors(): Promise<Record<string, { color: string; bg: string }>> {
+  const rows = db.select().from(organisationColors).all()
+  const map: Record<string, { color: string; bg: string }> = {}
+  for (const r of rows) {
+    map[r.organisation] = { color: r.color, bg: r.bg }
+  }
+  return map
+}
+
+export async function setOrgColor(organisation: string, color: string, bg: string) {
+  const existing = db.select().from(organisationColors).where(eq(organisationColors.organisation, organisation)).all()
+  if (existing.length > 0) {
+    await db.update(organisationColors).set({ color, bg }).where(eq(organisationColors.organisation, organisation))
+  } else {
+    await db.insert(organisationColors).values({ organisation, color, bg })
+  }
+  revalidatePath('/')
+}
+
+export async function deleteOrgColor(organisation: string) {
+  await db.delete(organisationColors).where(eq(organisationColors.organisation, organisation))
+  revalidatePath('/')
+}
+
+// ── Copy Week ─────────────────────────────────────────
 export async function copyPreviousWeek(targetWeekKey: string, sourceWeekKey: string) {
   const sourceBookings = db.select().from(bookings).where(eq(bookings.weekKey, sourceWeekKey)).all()
   if (sourceBookings.length === 0) return 0

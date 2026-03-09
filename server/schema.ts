@@ -39,7 +39,14 @@ export const scheduleEntries = sqliteTable('schedule_entries', {
   uniqueIndex('schedule_uniq').on(t.employeeId, t.date),
 ])
 
+export const organisationColors = sqliteTable('organisation_colors', {
+  organisation: text('organisation').primaryKey(),
+  color:        text('color').notNull(),
+  bg:           text('bg').notNull(),
+})
+
 export type Room = typeof rooms.$inferSelect
 export type Booking = typeof bookings.$inferSelect
 export type Employee = typeof employees.$inferSelect
 export type ScheduleEntry = typeof scheduleEntries.$inferSelect
+export type OrgColor = typeof organisationColors.$inferSelect

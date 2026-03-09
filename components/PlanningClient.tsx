@@ -2,14 +2,16 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getRooms, getBookings, addBooking, deleteBooking, addRoom, deleteRoom, copyPreviousWeek, getOrganisations } from '@/server/actions'
+import { getRooms, getBookings, addBooking, deleteBooking, addRoom, deleteRoom, updateRoom, copyPreviousWeek, getOrganisations, getOrgColors, setOrgColor, deleteOrgColor } from '@/server/actions'
 import { getWeekKey, shiftWeek } from '@/lib/weekUtils'
+import { getOrgColor } from '@/lib/orgColors'
 import type { Room, Booking } from '@/server/schema'
 import { Header } from './Header'
 import { LegendBar } from './LegendBar'
 import { PlanningGrid } from './PlanningGrid'
 import { BookingModal } from './modals/BookingModal'
 import { AddRoomModal } from './modals/AddRoomModal'
+import { ColorPickerModal } from './modals/ColorPickerModal'
 import { useToast, ToastContainer } from './Toast'
 import { exportPlanningToExcel } from '@/lib/exportExcel'
 
@@ -25,6 +27,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     roomId: string; dayIndex: number; slot: number
   } | null>(null)
   const [addRoomModal, setAddRoomModal] = useState(false)
+  const [colorPickerOrg, setColorPickerOrg] = useState<string | null>(null)
 
   const toast = useToast()
   const queryClient = useQueryClient()
@@ -38,6 +41,11 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
   const { data: knownOrgs = [] } = useQuery({
     queryKey: ['organisations'],
     queryFn: () => getOrganisations(),
+  })
+
+  const { data: customColors = {} } = useQuery({
+    queryKey: ['orgColors'],
+    queryFn: () => getOrgColors(),
   })
 
   const { data: bookingsData = [] } = useQuery({
@@ -86,6 +94,25 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     },
   })
 
+  const updateRoomMutation = useMutation({
+    mutationFn: ({ id, capacity }: { id: string; capacity: number | null }) =>
+      updateRoom(id, { capacity }),
+    onMutate: async ({ id, capacity }) => {
+      await queryClient.cancelQueries({ queryKey: ['rooms'] })
+      const previous = queryClient.getQueryData<Room[]>(['rooms'])
+      queryClient.setQueryData<Room[]>(['rooms'], (old) =>
+        old?.map((r) => r.id === id ? { ...r, capacity } : r) ?? []
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['rooms'], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['rooms'] })
+    },
+  })
+
   const copyPrevWeekMutation = useMutation({
     mutationFn: ({ target, source }: { target: string; source: string }) =>
       copyPreviousWeek(target, source),
@@ -117,10 +144,48 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     },
   })
 
+  const setOrgColorMutation = useMutation({
+    mutationFn: ({ org, color, bg }: { org: string; color: string; bg: string }) =>
+      setOrgColor(org, color, bg),
+    onMutate: async ({ org, color, bg }) => {
+      await queryClient.cancelQueries({ queryKey: ['orgColors'] })
+      const previous = queryClient.getQueryData<Record<string, { color: string; bg: string }>>(['orgColors'])
+      queryClient.setQueryData<Record<string, { color: string; bg: string }>>(['orgColors'], (old) => ({
+        ...old,
+        [org]: { color, bg },
+      }))
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['orgColors'], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['orgColors'] })
+    },
+  })
+
+  const deleteOrgColorMutation = useMutation({
+    mutationFn: (org: string) => deleteOrgColor(org),
+    onMutate: async (org) => {
+      await queryClient.cancelQueries({ queryKey: ['orgColors'] })
+      const previous = queryClient.getQueryData<Record<string, { color: string; bg: string }>>(['orgColors'])
+      const updated = { ...previous }
+      delete updated[org]
+      queryClient.setQueryData(['orgColors'], updated)
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) queryClient.setQueryData(['orgColors'], context.previous)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['orgColors'] })
+    },
+  })
+
   const allOrgs = [...new Set(bookingsData.map((b) => b.organisation))]
 
   return (
-    <div className="max-w-[1400px] mx-auto px-2 sm:px-4 py-4 sm:py-6">
+    <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-5 sm:py-8">
       <Header
         weekKey={currentWeekKey}
         onPrev={() => setCurrentWeekKey((k) => shiftWeek(k, -1))}
@@ -141,15 +206,21 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
         }}
       />
 
-      <LegendBar organisations={allOrgs} />
+      <LegendBar
+        organisations={allOrgs}
+        customColors={customColors}
+        onTagClick={(org) => setColorPickerOrg(org)}
+      />
 
       <PlanningGrid
         rooms={rooms}
         bookings={bookingsData}
         weekKey={currentWeekKey}
+        customColors={customColors}
         onSlotClick={(roomId, dayIndex, slot) => setBookingModal({ roomId, dayIndex, slot })}
         onDeleteBooking={(id) => deleteBookingMutation.mutate(id)}
         onDeleteRoom={(id) => deleteRoomMutation.mutate(id)}
+        onUpdateCapacity={(id, capacity) => updateRoomMutation.mutate({ id, capacity })}
       />
 
       {bookingModal && (
@@ -158,6 +229,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
           dayIndex={bookingModal.dayIndex}
           slot={bookingModal.slot}
           knownOrganisations={knownOrgs}
+          customColors={customColors}
           onConfirm={(organisation) => {
             addBookingMutation.mutate({
               roomId: bookingModal.roomId,
@@ -181,6 +253,23 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
           onClose={() => setAddRoomModal(false)}
         />
       )}
+
+      {colorPickerOrg && (
+        <ColorPickerModal
+          organisation={colorPickerOrg}
+          currentColor={getOrgColor(colorPickerOrg, customColors)}
+          onConfirm={(color, bg) => {
+            setOrgColorMutation.mutate({ org: colorPickerOrg, color, bg })
+            setColorPickerOrg(null)
+          }}
+          onReset={() => {
+            deleteOrgColorMutation.mutate(colorPickerOrg)
+            setColorPickerOrg(null)
+          }}
+          onClose={() => setColorPickerOrg(null)}
+        />
+      )}
+
       <ToastContainer toasts={toast.toasts} onDismiss={toast.dismiss} />
     </div>
   )

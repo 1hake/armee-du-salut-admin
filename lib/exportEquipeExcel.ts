@@ -1,16 +1,11 @@
 import * as XLSX from 'xlsx'
 import type { GeneratedSchedule } from './schedulerEngine'
+import { SHIFT_LABELS } from './schedulerEngine'
 import { DAYS_FR, MONTHS_FR } from './weekUtils'
 
 function parseDate(s: string): Date {
   const [y, m, d] = s.split('-').map(Number)
   return new Date(y, m - 1, d)
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  work: 'Travail',
-  weekend_work: 'Weekend',
-  rest: 'Repos',
 }
 
 export function exportEquipeToExcel(schedule: GeneratedSchedule) {
@@ -25,7 +20,7 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
       return d
     })
 
-    // Header row 1: empty + day names with dates
+    // Header row: empty + day names with dates
     const header: string[] = ['Salarié']
     for (let i = 0; i < 7; i++) {
       header.push(`${DAYS_FR[i]} ${dates[i].getDate()}/${dates[i].getMonth() + 1}`)
@@ -43,7 +38,8 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
         if (day.status === 'rest') {
           row.push('Repos')
         } else {
-          row.push(`${day.hours}h`)
+          const shiftLabel = day.shift ? SHIFT_LABELS[day.shift].time : ''
+          row.push(`${day.hours}h — ${shiftLabel}`)
         }
       }
       row.push(emp.totalHours)
@@ -62,10 +58,9 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
 
     const ws = XLSX.utils.aoa_to_sheet(data)
 
-    // Column widths
     ws['!cols'] = [
       { wch: 20 },
-      ...Array(7).fill({ wch: 16 }),
+      ...Array(7).fill({ wch: 22 }),
       { wch: 14 },
     ]
 
@@ -75,13 +70,13 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
 
   // Summary sheet
   if (schedule.summary.length > 0) {
-    const summaryHeader = ['Salarié', 'Weekends travaillés', 'Jours travaillés', 'Jours de repos', 'Heures totales']
+    const summaryHeader = ['Salarié', 'Weekends', 'Jours travaillés', 'Jours repos', 'Heures totales', 'Matin', 'Après-midi']
     const summaryData: (string | number)[][] = [summaryHeader]
     for (const s of schedule.summary) {
-      summaryData.push([s.employeeName, s.totalWeekends, s.totalWorkDays, s.totalRestDays, s.totalHours])
+      summaryData.push([s.employeeName, s.totalWeekends, s.totalWorkDays, s.totalRestDays, s.totalHours, s.matinCount, s.apremCount])
     }
     const ws = XLSX.utils.aoa_to_sheet(summaryData)
-    ws['!cols'] = [{ wch: 20 }, { wch: 20 }, { wch: 18 }, { wch: 16 }, { wch: 14 }]
+    ws['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 12 }]
     XLSX.utils.book_append_sheet(wb, ws, 'Résumé')
   }
 
