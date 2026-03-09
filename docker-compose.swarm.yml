@@ -30,7 +30,7 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3000
-      HOST: 0.0.0.0
+      HOSTNAME: 0.0.0.0
     volumes:
       - sqlite-data:/app/sqlite-data
     healthcheck:
