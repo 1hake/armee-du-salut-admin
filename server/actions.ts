@@ -21,6 +21,12 @@ export async function deleteRoom(id: string) {
   revalidatePath('/')
 }
 
+// ── Organisations (distinct from all bookings) ─────────
+export async function getOrganisations(): Promise<string[]> {
+  const rows = db.select({ organisation: bookings.organisation }).from(bookings).all()
+  return [...new Set(rows.map((r) => r.organisation))].sort()
+}
+
 // ── Bookings ───────────────────────────────────────────
 export async function getBookings(weekKey: string) {
   return db.select().from(bookings).where(eq(bookings.weekKey, weekKey))

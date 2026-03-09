@@ -9,9 +9,10 @@ interface Props {
   onToday: () => void
   onAddRoom: () => void
   onCopyPrevWeek: () => void
+  onExportExcel: () => void
 }
 
-export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrevWeek }: Props) {
+export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrevWeek, onExportExcel }: Props) {
   const monday = parseWeekKey(weekKey)
   const days = getWeekDays(monday)
   const label = fmtWeekLabel(days)
@@ -56,6 +57,14 @@ export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrev
           title="Copier les réservations de la semaine précédente"
         >
           Copier sem. prec.
+        </button>
+
+        <button
+          onClick={onExportExcel}
+          className="px-3 py-1.5 text-sm border border-border rounded-md hover:bg-surface transition-colors"
+          title="Télécharger le planning en Excel"
+        >
+          Télécharger Excel
         </button>
 
         <button

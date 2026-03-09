@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getRooms, getBookings, addBooking, deleteBooking, addRoom, deleteRoom, copyPreviousWeek } from '@/server/actions'
+import { getRooms, getBookings, addBooking, deleteBooking, addRoom, deleteRoom, copyPreviousWeek, getOrganisations } from '@/server/actions'
 import { getWeekKey, shiftWeek } from '@/lib/weekUtils'
 import type { Room, Booking } from '@/server/schema'
 import { Header } from './Header'
@@ -11,6 +11,7 @@ import { PlanningGrid } from './PlanningGrid'
 import { BookingModal } from './modals/BookingModal'
 import { AddRoomModal } from './modals/AddRoomModal'
 import { useToast, ToastContainer } from './Toast'
+import { exportPlanningToExcel } from '@/lib/exportExcel'
 
 interface Props {
   initialRooms: Room[]
@@ -32,6 +33,11 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     queryKey: ['rooms'],
     queryFn: () => getRooms(),
     initialData: initialRooms,
+  })
+
+  const { data: knownOrgs = [] } = useQuery({
+    queryKey: ['organisations'],
+    queryFn: () => getOrganisations(),
   })
 
   const { data: bookingsData = [] } = useQuery({
@@ -58,6 +64,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings', currentWeekKey] })
+      queryClient.invalidateQueries({ queryKey: ['organisations'] })
     },
   })
 
@@ -67,6 +74,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     }) => addBooking(roomId, weekKey, dayIndex, slot, organisation),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings', currentWeekKey] })
+      queryClient.invalidateQueries({ queryKey: ['organisations'] })
     },
   })
 
@@ -119,6 +127,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
         onNext={() => setCurrentWeekKey((k) => shiftWeek(k, 1))}
         onToday={() => setCurrentWeekKey(getWeekKey(new Date()))}
         onAddRoom={() => setAddRoomModal(true)}
+        onExportExcel={() => exportPlanningToExcel(rooms, bookingsData, currentWeekKey)}
         onCopyPrevWeek={() => {
           toast.confirm(
             'Copier les reservations de la semaine precedente ? Les reservations existantes seront remplacees.',
@@ -148,6 +157,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
           roomName={rooms.find((r) => r.id === bookingModal.roomId)?.name ?? ''}
           dayIndex={bookingModal.dayIndex}
           slot={bookingModal.slot}
+          knownOrganisations={knownOrgs}
           onConfirm={(organisation) => {
             addBookingMutation.mutate({
               roomId: bookingModal.roomId,
