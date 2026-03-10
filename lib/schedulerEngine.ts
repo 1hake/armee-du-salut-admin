@@ -288,6 +288,17 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
         }
       }
 
+      // Adjust hours per work day so every week totals exactly hoursPerWeek
+      const workDaysCount = days.filter((d) => d.status !== 'rest').length
+      if (workDaysCount > 0) {
+        const hoursPerWorkDay = Math.round((cfg.hoursPerWeek / workDaysCount) * 100) / 100
+        for (const day of days) {
+          if (day.status !== 'rest') {
+            day.hours = hoursPerWorkDay
+          }
+        }
+      }
+
       const totalHours = days.reduce((sum, day) => sum + day.hours, 0)
       employeeWeeks.push({
         employeeId: emp.id,

@@ -120,7 +120,7 @@ export function ScheduleGrid({ schedule, config }: Props) {
                     ) : (
                       <div className="space-y-0.5">
                         <div className={`text-[11px] font-medium ${style.text}`}>
-                          {day.hours}h
+                          {Number.isInteger(day.hours) ? day.hours : day.hours.toFixed(1)}h
                         </div>
                         {day.shift && shiftColor && (
                           <div className={`text-[9px] font-medium ${shiftColor.text} flex items-center justify-center gap-0.5`}>
@@ -149,7 +149,7 @@ export function ScheduleGrid({ schedule, config }: Props) {
                   key={i}
                   className={`border-border/60 ${i < 6 ? 'border-r' : ''} px-1 py-2 text-center bg-bg/30`}
                 >
-                  <div className="text-[11px] font-semibold">{totalForDay}h</div>
+                  <div className="text-[11px] font-semibold">{Number.isInteger(totalForDay) ? totalForDay : totalForDay.toFixed(1)}h</div>
                   <div className="text-[9px] text-muted">{workersForDay} pers.</div>
                 </div>
               )

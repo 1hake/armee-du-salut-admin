@@ -39,7 +39,8 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
           row.push('Repos')
         } else {
           const shiftLabel = day.shift ? SHIFT_LABELS[day.shift].time : ''
-          row.push(`${day.hours}h — ${shiftLabel}`)
+          const h = Number.isInteger(day.hours) ? day.hours : day.hours.toFixed(1)
+          row.push(`${h}h — ${shiftLabel}`)
         }
       }
       row.push(emp.totalHours)
@@ -51,7 +52,8 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
     for (let i = 0; i < 7; i++) {
       const totalH = week.employees.reduce((sum, emp) => sum + emp.days[i].hours, 0)
       const workers = week.employees.filter((emp) => emp.days[i].status !== 'rest').length
-      totalRow.push(`${totalH}h (${workers} pers.)`)
+      const totalHStr = Number.isInteger(totalH) ? totalH : +totalH.toFixed(1)
+      totalRow.push(`${totalHStr}h (${workers} pers.)`)
     }
     totalRow.push(week.employees.reduce((sum, emp) => sum + emp.totalHours, 0))
     data.push(totalRow)
