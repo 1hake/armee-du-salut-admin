@@ -13,6 +13,7 @@ export interface SchedulerConfig {
     matin: { label: string; time: string }
     aprem: { label: string; time: string }
   }
+  maxHoursPerDay: number
   maxConsecutiveWorkDays: number
   minConsecutiveRestDays: number
   enforceRecoveryMonday: boolean
@@ -28,6 +29,7 @@ export const DEFAULT_CONFIG: SchedulerConfig = {
     matin: { label: 'Matin', time: '8h45 – 16h45' },
     aprem: { label: 'Après-midi', time: '10h15 – 18h15' },
   },
+  maxHoursPerDay: 8,
   maxConsecutiveWorkDays: 6,
   minConsecutiveRestDays: 2,
   enforceRecoveryMonday: true,
@@ -288,21 +290,6 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
         }
       }
 
-      // Adjust hours per work day so every week totals exactly hoursPerWeek
-      // Distribute as integers: e.g. 35h / 4 days = 3×9h + 1×8h
-      const workDaysCount = days.filter((d) => d.status !== 'rest').length
-      if (workDaysCount > 0) {
-        const baseHours = Math.floor(cfg.hoursPerWeek / workDaysCount)
-        const extraDays = cfg.hoursPerWeek - baseHours * workDaysCount
-        let assigned = 0
-        for (const day of days) {
-          if (day.status !== 'rest') {
-            day.hours = assigned < extraDays ? baseHours + 1 : baseHours
-            assigned++
-          }
-        }
-      }
-
       const totalHours = days.reduce((sum, day) => sum + day.hours, 0)
       employeeWeeks.push({
         employeeId: emp.id,
@@ -317,6 +304,46 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
     allWeeks.push({ weekKey, weekendWorkerIds: [ww1, ww2], employees: employeeWeeks })
 
     prevWeekendWorkerIds = weekendWorkerSet
+  }
+
+  // ── Cycle-wide hours distribution ──────────────────────
+  // Target: average hoursPerWeek over the cycle, using only integer hours
+  // between hoursPerDay and maxHoursPerDay.
+  // Strategy: start all work days at hoursPerDay, then upgrade some to +1h
+  // (up to maxHoursPerDay) to fill the deficit. Prioritize shorter weeks first.
+  for (const emp of employees) {
+    const empWeeks = allWeeks.map((w) => w.employees.find((e) => e.employeeId === emp.id)!)
+    const totalTarget = cfg.hoursPerWeek * weeks
+    const totalCurrent = empWeeks.reduce((s, ew) => s + ew.totalHours, 0)
+    let deficit = totalTarget - totalCurrent
+
+    if (deficit > 0) {
+      // Collect all upgradeable days (work days below maxHoursPerDay)
+      // Sort by week length (shorter weeks first) to spread the load
+      const upgradeable: { day: EmployeeDay; weekIdx: number; workDays: number }[] = []
+      empWeeks.forEach((ew, wi) => {
+        const workDays = ew.days.filter((d) => d.status !== 'rest').length
+        for (const day of ew.days) {
+          if (day.status !== 'rest' && day.hours < cfg.maxHoursPerDay) {
+            upgradeable.push({ day, weekIdx: wi, workDays })
+          }
+        }
+      })
+      // Shorter weeks first so recovery weeks get extra hours before normal weeks
+      upgradeable.sort((a, b) => a.workDays - b.workDays)
+
+      for (const item of upgradeable) {
+        if (deficit <= 0) break
+        const canAdd = Math.min(cfg.maxHoursPerDay - item.day.hours, deficit)
+        item.day.hours += canAdd
+        deficit -= canAdd
+      }
+
+      // Recalculate week totals
+      for (const ew of empWeeks) {
+        ew.totalHours = ew.days.reduce((s, d) => s + d.hours, 0)
+      }
+    }
   }
 
   const violations = detectViolations(allWeeks, employeeMap, cfg)

@@ -64,17 +64,29 @@ export function SchedulerSettings({ config, onSave, saving }: Props) {
                 />
               </div>
               <div>
-                <label className="block text-[11px] text-muted mb-1">Heures/semaine</label>
+                <label className="block text-[11px] text-muted mb-1">Max heures/jour</label>
                 <input
                   type="number"
-                  step="0.5"
-                  min="1"
-                  max="60"
-                  value={draft.hoursPerWeek}
-                  onChange={(e) => update('hoursPerWeek', Number(e.target.value))}
+                  step="1"
+                  min={draft.hoursPerDay}
+                  max="12"
+                  value={draft.maxHoursPerDay}
+                  onChange={(e) => update('maxHoursPerDay', Number(e.target.value))}
                   className="w-full border border-border rounded-lg px-2.5 py-1.5 text-[12px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-[11px] text-muted mb-1">Heures/semaine (cible moyenne)</label>
+              <input
+                type="number"
+                step="0.5"
+                min="1"
+                max="60"
+                value={draft.hoursPerWeek}
+                onChange={(e) => update('hoursPerWeek', Number(e.target.value))}
+                className="w-full border border-border rounded-lg px-2.5 py-1.5 text-[12px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+              />
             </div>
             <div>
               <label className="block text-[11px] text-muted mb-1">Pause dejeuner</label>
