@@ -36,7 +36,7 @@ export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: P
           <span className="text-[12px]">{SHIFT_LABELS.aprem.label} : {SHIFT_LABELS.aprem.time}</span>
         </div>
         <div className="text-[11px] text-muted mt-1">
-          Pause dej : {LUNCH_BREAK} &middot; {HOURS_PER_DAY}h/jour &middot; {HOURS_PER_WEEK}h/semaine
+          Pause dej : {LUNCH_BREAK} &middot; {HOURS_PER_WEEK}h/semaine
         </div>
       </div>
 
