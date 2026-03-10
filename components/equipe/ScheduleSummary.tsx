@@ -1,15 +1,15 @@
 'use client'
 
-import type { EmployeeSummary, Violation } from '@/lib/schedulerEngine'
-import { HOURS_PER_WEEK } from '@/lib/schedulerEngine'
+import type { EmployeeSummary, Violation, SchedulerConfig } from '@/lib/schedulerEngine'
 
 interface Props {
   summary: EmployeeSummary[]
   violations: Violation[]
   weeks: number
+  config: SchedulerConfig
 }
 
-export function ScheduleSummary({ summary, violations, weeks }: Props) {
+export function ScheduleSummary({ summary, violations, weeks, config }: Props) {
   return (
     <div className="space-y-4">
       {/* Violations */}
@@ -47,7 +47,7 @@ export function ScheduleSummary({ summary, violations, weeks }: Props) {
           <tbody>
             {summary.map((s) => {
               const avgHoursPerWeek = s.avgHoursPerWeek.toFixed(1)
-              const hoursOk = Math.abs(s.avgHoursPerWeek - HOURS_PER_WEEK) <= 1
+              const hoursOk = Math.abs(s.avgHoursPerWeek - config.hoursPerWeek) <= 1
               return (
                 <tr key={s.employeeId} className="border-b border-border/40 last:border-0 hover:bg-bg/30 transition-colors">
                   <td className="px-3.5 py-2.5 font-medium">{s.employeeName}</td>

@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import type { GeneratedSchedule } from '@/lib/schedulerEngine'
-import { SHIFT_LABELS } from '@/lib/schedulerEngine'
+import type { GeneratedSchedule, SchedulerConfig } from '@/lib/schedulerEngine'
 import { DAYS_FR, MONTHS_FR } from '@/lib/weekUtils'
 
 interface Props {
   schedule: GeneratedSchedule
+  config: SchedulerConfig
 }
 
 const STATUS_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -20,7 +20,7 @@ const SHIFT_COLORS = {
   aprem: { dot: 'bg-amber-400', text: 'text-amber-600' },
 }
 
-export function ScheduleGrid({ schedule }: Props) {
+export function ScheduleGrid({ schedule, config }: Props) {
   const [currentWeekIdx, setCurrentWeekIdx] = useState(0)
   const week = schedule.weeks[currentWeekIdx]
 
@@ -46,11 +46,11 @@ export function ScheduleGrid({ schedule }: Props) {
         <span className="text-border">|</span>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-400" />
-          <span className="text-muted">{SHIFT_LABELS.matin.label} ({SHIFT_LABELS.matin.time})</span>
+          <span className="text-muted">{config.shifts.matin.label} ({config.shifts.matin.time})</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-muted">{SHIFT_LABELS.aprem.label} ({SHIFT_LABELS.aprem.time})</span>
+          <span className="text-muted">{config.shifts.aprem.label} ({config.shifts.aprem.time})</span>
         </div>
       </div>
 
@@ -120,7 +120,7 @@ export function ScheduleGrid({ schedule }: Props) {
                     ) : (
                       <div className="space-y-0.5">
                         <div className={`text-[11px] font-medium ${style.text}`}>
-                          {Number.isInteger(day.hours) ? day.hours : day.hours.toFixed(1)}h
+                          {day.hours}h
                         </div>
                         {day.shift && shiftColor && (
                           <div className={`text-[9px] font-medium ${shiftColor.text} flex items-center justify-center gap-0.5`}>
@@ -149,7 +149,7 @@ export function ScheduleGrid({ schedule }: Props) {
                   key={i}
                   className={`border-border/60 ${i < 6 ? 'border-r' : ''} px-1 py-2 text-center bg-bg/30`}
                 >
-                  <div className="text-[11px] font-semibold">{Number.isInteger(totalForDay) ? totalForDay : totalForDay.toFixed(1)}h</div>
+                  <div className="text-[11px] font-semibold">{totalForDay}h</div>
                   <div className="text-[9px] text-muted">{workersForDay} pers.</div>
                 </div>
               )

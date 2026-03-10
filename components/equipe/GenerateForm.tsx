@@ -2,16 +2,17 @@
 
 import { useState } from 'react'
 import { getWeekKey } from '@/lib/weekUtils'
-import { HOURS_PER_DAY, HOURS_PER_WEEK, SHIFT_LABELS, LUNCH_BREAK } from '@/lib/schedulerEngine'
+import type { SchedulerConfig } from '@/lib/schedulerEngine'
 
 interface Props {
   disabled: boolean
   loading: boolean
   employeeCount: number
+  config: SchedulerConfig
   onGenerate: (startDate: string, weeks?: number) => void
 }
 
-export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: Props) {
+export function GenerateForm({ disabled, loading, employeeCount, config, onGenerate }: Props) {
   const [startDate, setStartDate] = useState(() => getWeekKey(new Date()))
   const [useCustomWeeks, setUseCustomWeeks] = useState(false)
   const [customWeeks, setCustomWeeks] = useState(5)
@@ -29,14 +30,14 @@ export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: P
         <div className="text-[11px] font-medium text-muted uppercase tracking-wider mb-1">Horaires</div>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-blue-400" />
-          <span className="text-[12px]">{SHIFT_LABELS.matin.label} : {SHIFT_LABELS.matin.time}</span>
+          <span className="text-[12px]">{config.shifts.matin.label} : {config.shifts.matin.time}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-amber-400" />
-          <span className="text-[12px]">{SHIFT_LABELS.aprem.label} : {SHIFT_LABELS.aprem.time}</span>
+          <span className="text-[12px]">{config.shifts.aprem.label} : {config.shifts.aprem.time}</span>
         </div>
         <div className="text-[11px] text-muted mt-1">
-          Pause dej : {LUNCH_BREAK} &middot; {HOURS_PER_WEEK}h/semaine
+          Pause dej : {config.lunchBreak} &middot; {config.hoursPerDay}h/jour &middot; {config.hoursPerWeek}h/semaine
         </div>
       </div>
 

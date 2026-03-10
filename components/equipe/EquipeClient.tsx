@@ -7,15 +7,19 @@ import {
   addEmployee,
   deleteEmployee,
   generateAndSaveSchedule,
+  getSchedulerConfig,
+  saveSchedulerConfig,
 } from '@/server/equipeActions'
 import type { Employee } from '@/server/schema'
-import type { GeneratedSchedule } from '@/lib/schedulerEngine'
+import type { GeneratedSchedule, SchedulerConfig } from '@/lib/schedulerEngine'
+import { DEFAULT_CONFIG } from '@/lib/schedulerEngine'
 import { useToast, ToastContainer } from '@/components/Toast'
 import { exportEquipeToExcel } from '@/lib/exportEquipeExcel'
 import { GenerateForm } from './GenerateForm'
 import { ScheduleGrid } from './ScheduleGrid'
 import { ScheduleSummary } from './ScheduleSummary'
 import { EmployeeList } from './EmployeeList'
+import { SchedulerSettings } from './SchedulerSettings'
 
 interface Props {
   initialEmployees: Employee[]
@@ -30,6 +34,22 @@ export function EquipeClient({ initialEmployees }: Props) {
     queryKey: ['employees'],
     queryFn: () => getEmployees(),
     initialData: initialEmployees,
+  })
+
+  const { data: config = DEFAULT_CONFIG } = useQuery({
+    queryKey: ['schedulerConfig'],
+    queryFn: () => getSchedulerConfig(),
+  })
+
+  const saveConfigMutation = useMutation({
+    mutationFn: (cfg: SchedulerConfig) => saveSchedulerConfig(cfg),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['schedulerConfig'] })
+      toast.success('Regles sauvegardees')
+    },
+    onError: () => {
+      toast.error('Erreur lors de la sauvegarde')
+    },
   })
 
   const addEmployeeMutation = useMutation({
@@ -88,10 +108,17 @@ export function EquipeClient({ initialEmployees }: Props) {
             onDelete={(id) => deleteEmployeeMutation.mutate(id)}
           />
 
+          <SchedulerSettings
+            config={config}
+            onSave={(cfg) => saveConfigMutation.mutate(cfg)}
+            saving={saveConfigMutation.isPending}
+          />
+
           <GenerateForm
             disabled={employees.length < 2}
             loading={generateMutation.isPending}
             employeeCount={employees.length}
+            config={config}
             onGenerate={(startDate, weeks) =>
               generateMutation.mutate({ startDate, weeks })
             }
@@ -107,6 +134,7 @@ export function EquipeClient({ initialEmployees }: Props) {
                   summary={schedule.summary}
                   violations={schedule.violations}
                   weeks={schedule.weeks.length}
+                  config={config}
                 />
                 <button
                   onClick={() => exportEquipeToExcel(schedule)}
@@ -115,7 +143,7 @@ export function EquipeClient({ initialEmployees }: Props) {
                   Export Excel
                 </button>
               </div>
-              <ScheduleGrid schedule={schedule} />
+              <ScheduleGrid schedule={schedule} config={config} />
             </>
           )}
 

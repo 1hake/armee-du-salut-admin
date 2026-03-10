@@ -1,10 +1,16 @@
 'use server'
 
 import { db } from './db'
-import { employees, scheduleEntries } from './schema'
+import { employees, scheduleEntries, schedulerConfig } from './schema'
 import { eq, and, gte, lte } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
-import { generateSchedule, type GeneratedSchedule, type Employee as EngineEmployee } from '@/lib/schedulerEngine'
+import {
+  generateSchedule,
+  DEFAULT_CONFIG,
+  type GeneratedSchedule,
+  type Employee as EngineEmployee,
+  type SchedulerConfig,
+} from '@/lib/schedulerEngine'
 
 // ── Employees ──────────────────────────────────────────
 
@@ -21,6 +27,30 @@ export async function addEmployee(name: string) {
 
 export async function deleteEmployee(id: string) {
   await db.delete(employees).where(eq(employees.id, id))
+  revalidatePath('/equipe')
+}
+
+// ── Scheduler Config ───────────────────────────────────
+
+export async function getSchedulerConfig(): Promise<SchedulerConfig> {
+  const row = db.select().from(schedulerConfig).where(eq(schedulerConfig.id, 'default')).get()
+  if (!row) return DEFAULT_CONFIG
+  try {
+    return { ...DEFAULT_CONFIG, ...JSON.parse(row.config) }
+  } catch {
+    return DEFAULT_CONFIG
+  }
+}
+
+export async function saveSchedulerConfig(config: SchedulerConfig): Promise<void> {
+  const existing = db.select().from(schedulerConfig).where(eq(schedulerConfig.id, 'default')).get()
+  if (existing) {
+    await db.update(schedulerConfig)
+      .set({ config: JSON.stringify(config) })
+      .where(eq(schedulerConfig.id, 'default'))
+  } else {
+    await db.insert(schedulerConfig).values({ id: 'default', config: JSON.stringify(config) })
+  }
   revalidatePath('/equipe')
 }
 
@@ -42,12 +72,14 @@ export async function generateAndSaveSchedule(
   const emps = db.select().from(employees).orderBy(employees.position).all()
   if (emps.length < 2) throw new Error('Au moins 2 salariés requis')
 
+  const config = await getSchedulerConfig()
   const engineEmployees: EngineEmployee[] = emps.map((e) => ({ id: e.id, name: e.name }))
 
   const schedule = generateSchedule({
     employees: engineEmployees,
     startDate,
     weeks,
+    config,
   })
 
   // Compute date range to clear

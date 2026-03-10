@@ -36,9 +36,13 @@ function createTables(sqlite: InstanceType<typeof Database>) {
       date TEXT NOT NULL,
       day_index INTEGER NOT NULL,
       status TEXT NOT NULL,
-      hours REAL NOT NULL DEFAULT 0
+      hours INTEGER NOT NULL DEFAULT 0
     );
     CREATE UNIQUE INDEX IF NOT EXISTS schedule_uniq ON schedule_entries(employee_id, date);
+    CREATE TABLE IF NOT EXISTS scheduler_config (
+      id TEXT PRIMARY KEY DEFAULT 'default',
+      config TEXT NOT NULL
+    );
     CREATE TABLE IF NOT EXISTS organisation_colors (
       organisation TEXT PRIMARY KEY,
       color TEXT NOT NULL,
