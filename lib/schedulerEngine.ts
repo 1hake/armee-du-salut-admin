@@ -289,12 +289,16 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
       }
 
       // Adjust hours per work day so every week totals exactly hoursPerWeek
+      // Distribute as integers: e.g. 35h / 4 days = 3×9h + 1×8h
       const workDaysCount = days.filter((d) => d.status !== 'rest').length
       if (workDaysCount > 0) {
-        const hoursPerWorkDay = Math.round((cfg.hoursPerWeek / workDaysCount) * 100) / 100
+        const baseHours = Math.floor(cfg.hoursPerWeek / workDaysCount)
+        const extraDays = cfg.hoursPerWeek - baseHours * workDaysCount
+        let assigned = 0
         for (const day of days) {
           if (day.status !== 'rest') {
-            day.hours = hoursPerWorkDay
+            day.hours = assigned < extraDays ? baseHours + 1 : baseHours
+            assigned++
           }
         }
       }

@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, real, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core'
 import { createId } from '@paralleldrive/cuid2'
 
 export const rooms = sqliteTable('rooms', {
@@ -34,7 +34,7 @@ export const scheduleEntries = sqliteTable('schedule_entries', {
   date:       text('date').notNull(),          // YYYY-MM-DD
   dayIndex:   integer('day_index').notNull(),   // 0=Lun … 6=Dim
   status:     text('status').notNull(),         // 'work' | 'rest' | 'weekend_work'
-  hours:      real('hours').notNull().default(0),
+  hours:      integer('hours').notNull().default(0),
 }, (t) => [
   uniqueIndex('schedule_uniq').on(t.employeeId, t.date),
 ])
