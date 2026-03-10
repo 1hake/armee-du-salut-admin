@@ -64,3 +64,22 @@ input[type="color"]::-webkit-color-swatch {
   border: 1px solid #E5E5EA;
   border-radius: 6px;
 }
+
+/* Print styles */
+@media print {
+  nav, .no-print { display: none !important; }
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    margin: 0;
+    padding: 0;
+  }
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+  .print-content {
+    padding: 0 !important;
+  }
+}

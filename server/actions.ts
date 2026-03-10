@@ -1,8 +1,8 @@
 'use server'
 
 import { db } from './db'
-import { rooms, bookings, organisationColors } from './schema'
-import { eq } from 'drizzle-orm'
+import { rooms, bookings, organisationColors, organisations } from './schema'
+import { eq, and } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 // ── Rooms ──────────────────────────────────────────────
@@ -75,6 +75,26 @@ export async function deleteOrgColor(organisation: string) {
   revalidatePath('/')
 }
 
+// ── Move Booking ─────────────────────────────────────
+export async function moveBooking(id: string, roomId: string, dayIndex: number, slot: number) {
+  const booking = db.select().from(bookings).where(eq(bookings.id, id)).get()
+  if (!booking) return false
+  const existing = db.select().from(bookings).where(
+    and(eq(bookings.roomId, roomId), eq(bookings.weekKey, booking.weekKey), eq(bookings.dayIndex, dayIndex), eq(bookings.slot, slot))
+  ).get()
+  if (existing) return false
+  await db.update(bookings).set({ roomId, dayIndex, slot }).where(eq(bookings.id, id))
+  revalidatePath('/')
+  return true
+}
+
+// ── Stats ─────────────────────────────────────────────
+export async function getStats() {
+  const allBookings = db.select().from(bookings).all()
+  const allRooms = db.select().from(rooms).orderBy(rooms.position).all()
+  return { bookings: allBookings, rooms: allRooms }
+}
+
 // ── Copy Week ─────────────────────────────────────────
 export async function copyPreviousWeek(targetWeekKey: string, sourceWeekKey: string) {
   const sourceBookings = db.select().from(bookings).where(eq(bookings.weekKey, sourceWeekKey)).all()
@@ -94,4 +114,46 @@ export async function copyPreviousWeek(targetWeekKey: string, sourceWeekKey: str
   }
   revalidatePath('/')
   return sourceBookings.length
+}
+
+// ── Organisations Directory ──────────────────────────
+export async function getOrganisationsList() {
+  return db.select().from(organisations).orderBy(organisations.name)
+}
+
+export async function addOrganisation(data: { name: string; shortName?: string; contact?: string; phone?: string; email?: string; notes?: string }) {
+  await db.insert(organisations).values(data)
+  revalidatePath('/partenaires')
+}
+
+export async function updateOrganisation(id: string, data: { name?: string; shortName?: string; contact?: string; phone?: string; email?: string; notes?: string }) {
+  // If name changed, cascade to bookings and organisation_colors
+  if (data.name) {
+    const existing = db.select().from(organisations).where(eq(organisations.id, id)).get()
+    if (existing && existing.name !== data.name) {
+      await db.update(bookings).set({ organisation: data.name }).where(eq(bookings.organisation, existing.name))
+      const colorRow = db.select().from(organisationColors).where(eq(organisationColors.organisation, existing.name)).get()
+      if (colorRow) {
+        await db.delete(organisationColors).where(eq(organisationColors.organisation, existing.name))
+        await db.insert(organisationColors).values({ organisation: data.name, color: colorRow.color, bg: colorRow.bg })
+      }
+    }
+  }
+  await db.update(organisations).set(data).where(eq(organisations.id, id))
+  revalidatePath('/partenaires')
+  revalidatePath('/')
+}
+
+export async function deleteOrganisation(id: string) {
+  await db.delete(organisations).where(eq(organisations.id, id))
+  revalidatePath('/partenaires')
+}
+
+export async function getOrgBookingCounts(): Promise<Record<string, number>> {
+  const rows = db.select({ organisation: bookings.organisation }).from(bookings).all()
+  const counts: Record<string, number> = {}
+  for (const r of rows) {
+    counts[r.organisation] = (counts[r.organisation] || 0) + 1
+  }
+  return counts
 }

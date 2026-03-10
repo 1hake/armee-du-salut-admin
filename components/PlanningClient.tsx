@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getRooms, getBookings, addBooking, deleteBooking, addRoom, deleteRoom, updateRoom, copyPreviousWeek, getOrganisations, getOrgColors, setOrgColor, deleteOrgColor } from '@/server/actions'
+import { getRooms, getBookings, addBooking, deleteBooking, moveBooking, addRoom, deleteRoom, updateRoom, copyPreviousWeek, getOrganisations, getOrganisationsList, getOrgColors, setOrgColor, deleteOrgColor } from '@/server/actions'
 import { getWeekKey, shiftWeek } from '@/lib/weekUtils'
 import { getOrgColor } from '@/lib/orgColors'
 import type { Room, Booking } from '@/server/schema'
@@ -43,6 +43,14 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     queryFn: () => getOrganisations(),
   })
 
+  const { data: partenaires = [] } = useQuery({
+    queryKey: ['partenaires'],
+    queryFn: async () => {
+      const list = await getOrganisationsList()
+      return list.map((o) => o.name)
+    },
+  })
+
   const { data: customColors = {} } = useQuery({
     queryKey: ['orgColors'],
     queryFn: () => getOrgColors(),
@@ -73,6 +81,29 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings', currentWeekKey] })
       queryClient.invalidateQueries({ queryKey: ['organisations'] })
+    },
+  })
+
+  const moveBookingMutation = useMutation({
+    mutationFn: ({ id, roomId, dayIndex, slot }: {
+      id: string; roomId: string; dayIndex: number; slot: number
+    }) => moveBooking(id, roomId, dayIndex, slot),
+    onMutate: async ({ id, roomId, dayIndex, slot }) => {
+      await queryClient.cancelQueries({ queryKey: ['bookings', currentWeekKey] })
+      const previous = queryClient.getQueryData<Booking[]>(['bookings', currentWeekKey])
+      queryClient.setQueryData<Booking[]>(
+        ['bookings', currentWeekKey],
+        (old) => old?.map((b) => b.id === id ? { ...b, roomId, dayIndex, slot } : b) ?? []
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['bookings', currentWeekKey], context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings', currentWeekKey] })
     },
   })
 
@@ -193,6 +224,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
         onToday={() => setCurrentWeekKey(getWeekKey(new Date()))}
         onAddRoom={() => setAddRoomModal(true)}
         onExportExcel={() => exportPlanningToExcel(rooms, bookingsData, currentWeekKey)}
+        onPrint={() => window.open(`/print?week=${currentWeekKey}`, '_blank')}
         onCopyPrevWeek={() => {
           toast.confirm(
             'Copier les reservations de la semaine precedente ? Les reservations existantes seront remplacees.',
@@ -219,6 +251,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
         customColors={customColors}
         onSlotClick={(roomId, dayIndex, slot) => setBookingModal({ roomId, dayIndex, slot })}
         onDeleteBooking={(id) => deleteBookingMutation.mutate(id)}
+        onMoveBooking={(bookingId, roomId, dayIndex, slot) => moveBookingMutation.mutate({ id: bookingId, roomId, dayIndex, slot })}
         onDeleteRoom={(id) => deleteRoomMutation.mutate(id)}
         onUpdateCapacity={(id, capacity) => updateRoomMutation.mutate({ id, capacity })}
       />
@@ -228,7 +261,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
           roomName={rooms.find((r) => r.id === bookingModal.roomId)?.name ?? ''}
           dayIndex={bookingModal.dayIndex}
           slot={bookingModal.slot}
-          knownOrganisations={knownOrgs}
+          knownOrganisations={[...new Set([...partenaires, ...knownOrgs])]}
           customColors={customColors}
           onConfirm={(organisation) => {
             addBookingMutation.mutate({

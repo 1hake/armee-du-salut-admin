@@ -10,9 +10,10 @@ interface Props {
   onAddRoom: () => void
   onCopyPrevWeek: () => void
   onExportExcel: () => void
+  onPrint: () => void
 }
 
-export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrevWeek, onExportExcel }: Props) {
+export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrevWeek, onExportExcel, onPrint }: Props) {
   const monday = parseWeekKey(weekKey)
   const days = getWeekDays(monday)
   const label = fmtWeekLabel(days)
@@ -26,7 +27,7 @@ export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrev
 
         <button
           onClick={onAddRoom}
-          className="px-4 py-2 text-sm font-medium bg-accent text-white rounded-full hover:brightness-110 transition-all active:scale-95"
+          className="px-3.5 py-1.5 text-[13px] font-medium rounded-full border border-border hover:bg-surface transition-colors active:scale-95"
         >
           + Salle
         </button>
@@ -75,6 +76,14 @@ export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrev
             title="Télécharger le planning en Excel"
           >
             Export Excel
+          </button>
+
+          <button
+            onClick={onPrint}
+            className="px-3.5 py-1.5 text-[13px] font-medium rounded-full border border-border hover:bg-surface transition-colors active:scale-95"
+            title="Imprimer le planning"
+          >
+            Imprimer
           </button>
         </div>
       </div>

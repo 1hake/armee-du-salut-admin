@@ -53,7 +53,7 @@ export function BookingModal({ roomName, dayIndex, slot, knownOrganisations, cus
 
         {/* Body */}
         <div className="px-5 sm:px-6 pb-5 sm:pb-6">
-          <label className="block text-sm font-medium mb-1.5">Organisation</label>
+          <label className="block text-sm font-medium mb-1.5">Partenaire</label>
           <input
             type="text"
             value={organisation}

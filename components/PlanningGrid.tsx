@@ -12,6 +12,7 @@ interface Props {
   customColors?: Record<string, { color: string; bg: string }>
   onSlotClick: (roomId: string, dayIndex: number, slot: number) => void
   onDeleteBooking: (id: string) => void
+  onMoveBooking: (bookingId: string, roomId: string, dayIndex: number, slot: number) => void
   onDeleteRoom: (id: string) => void
   onUpdateCapacity: (id: string, capacity: number | null) => void
 }
@@ -65,7 +66,7 @@ function CapacityEditor({ room, onSave }: { room: Room; onSave: (capacity: numbe
   )
 }
 
-export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotClick, onDeleteBooking, onDeleteRoom, onUpdateCapacity }: Props) {
+export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotClick, onDeleteBooking, onMoveBooking, onDeleteRoom, onUpdateCapacity }: Props) {
   const monday = parseWeekKey(weekKey)
   const days = getWeekDays(monday)
   const todayKey = getWeekKey(new Date())
@@ -185,6 +186,9 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                         <SlotCell
                           key={`${dayIndex}-${slot}`}
                           booking={booking ?? null}
+                          roomId={room.id}
+                          dayIndex={dayIndex}
+                          slot={slot}
                           isToday={dayIndex === todayDayIndex}
                           isAfternoon={isAfternoon}
                           isLastDayAfternoon={isAfternoon && !isLastDay}
@@ -193,6 +197,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                             if (!booking) onSlotClick(room.id, dayIndex, slot)
                           }}
                           onDelete={booking ? () => onDeleteBooking(booking.id) : undefined}
+                          onMoveBooking={onMoveBooking}
                         />
                       )
                     })}

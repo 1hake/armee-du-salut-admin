@@ -45,8 +45,21 @@ export const organisationColors = sqliteTable('organisation_colors', {
   bg:           text('bg').notNull(),
 })
 
+// ── Organisations Directory ─────────────────────────────
+
+export const organisations = sqliteTable('organisations', {
+  id:        text('id').primaryKey().$defaultFn(() => createId()),
+  name:      text('name').notNull().unique(),
+  shortName: text('short_name'),
+  contact:   text('contact'),
+  phone:     text('phone'),
+  email:     text('email'),
+  notes:     text('notes'),
+})
+
 export type Room = typeof rooms.$inferSelect
 export type Booking = typeof bookings.$inferSelect
 export type Employee = typeof employees.$inferSelect
 export type ScheduleEntry = typeof scheduleEntries.$inferSelect
 export type OrgColor = typeof organisationColors.$inferSelect
+export type Organisation = typeof organisations.$inferSelect
