@@ -20,7 +20,7 @@ export function SchedulerSettings({ config, onSave, saving }: Props) {
     setDraft((prev) => ({ ...prev, [key]: value }))
   }
 
-  const toggleDay = (field: 'weekendWorkerWorkDays' | 'weekendWorkerRestDays', day: number) => {
+  const toggleDay = (field: 'weekendWorkerWorkDays', day: number) => {
     setDraft((prev) => {
       const arr = prev[field]
       const next = arr.includes(day) ? arr.filter((d) => d !== day) : [...arr, day].sort()
@@ -154,44 +154,6 @@ export function SchedulerSettings({ config, onSave, saving }: Props) {
             </div>
           </section>
 
-          {/* Contraintes */}
-          <section className="space-y-2">
-            <div className="text-[11px] font-medium text-muted uppercase tracking-wider">Contraintes</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="block text-[11px] text-muted mb-1">Max jours travail consecutifs</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="7"
-                  value={draft.maxConsecutiveWorkDays}
-                  onChange={(e) => update('maxConsecutiveWorkDays', Number(e.target.value))}
-                  className="w-full border border-border rounded-lg px-2.5 py-1.5 text-[12px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] text-muted mb-1">Min jours repos consecutifs</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="7"
-                  value={draft.minConsecutiveRestDays}
-                  onChange={(e) => update('minConsecutiveRestDays', Number(e.target.value))}
-                  className="w-full border border-border rounded-lg px-2.5 py-1.5 text-[12px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
-                />
-              </div>
-            </div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={draft.enforceRecoveryMonday}
-                onChange={(e) => update('enforceRecoveryMonday', e.target.checked)}
-                className="rounded border-border accent-accent"
-              />
-              <span className="text-[12px]">Repos lundi apres un weekend travaille</span>
-            </label>
-          </section>
-
           {/* Weekend worker days */}
           <section className="space-y-2">
             <div className="text-[11px] font-medium text-muted uppercase tracking-wider">Jours travailles (semaine weekend)</div>
@@ -206,29 +168,6 @@ export function SchedulerSettings({ config, onSave, saving }: Props) {
                     className={`flex-1 py-1.5 text-[11px] rounded-lg border transition-all ${
                       active
                         ? 'border-ink bg-ink text-bg font-medium'
-                        : 'border-border hover:bg-bg/50'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                )
-              })}
-            </div>
-          </section>
-
-          <section className="space-y-2">
-            <div className="text-[11px] font-medium text-muted uppercase tracking-wider">Jours repos (semaine weekend)</div>
-            <div className="flex gap-1">
-              {DAYS_FR.map((label, i) => {
-                const active = draft.weekendWorkerRestDays.includes(i)
-                return (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => toggleDay('weekendWorkerRestDays', i)}
-                    className={`flex-1 py-1.5 text-[11px] rounded-lg border transition-all ${
-                      active
-                        ? 'border-red-300 bg-red-50 text-red-700 font-medium'
                         : 'border-border hover:bg-bg/50'
                     }`}
                   >

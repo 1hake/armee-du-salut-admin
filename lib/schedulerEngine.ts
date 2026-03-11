@@ -15,12 +15,13 @@ export interface SchedulerConfig {
     aprem: { label: string; time: string }
   }
   maxHoursPerDay: number
-  maxConsecutiveWorkDays: number
-  minConsecutiveRestDays: number
-  enforceRecoveryMonday: boolean
   weekendWorkerWorkDays: number[]   // day indices (0=Lun) where weekend workers work
-  weekendWorkerRestDays: number[]   // day indices where weekend workers rest
 }
+
+// Hard-coded engine constraints (not user-configurable)
+const MAX_CONSECUTIVE_WORK_DAYS = 6
+const MIN_CONSECUTIVE_REST_DAYS = 2
+const ENFORCE_RECOVERY_MONDAY = true
 
 export const DEFAULT_CONFIG: SchedulerConfig = {
   hoursPerDay: 7,
@@ -32,11 +33,7 @@ export const DEFAULT_CONFIG: SchedulerConfig = {
     aprem: { label: 'Après-midi', time: '10h15 – 18h15' },
   },
   maxHoursPerDay: 8,
-  maxConsecutiveWorkDays: 6,
-  minConsecutiveRestDays: 2,
-  enforceRecoveryMonday: true,
   weekendWorkerWorkDays: [0, 1, 2, 5, 6],  // Mon-Wed + Sat-Sun
-  weekendWorkerRestDays: [3, 4],             // Thu-Fri
 }
 
 // Keep backward-compat exports (used by some components)
@@ -239,7 +236,7 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
 
   // Pre-compute day sets from config
   const weekendWorkSet = new Set(cfg.weekendWorkerWorkDays)
-  const weekendRestSet = new Set(cfg.weekendWorkerRestDays)
+
 
   for (let w = 0; w < weeks; w++) {
     const monday = addDays(parseDateStr(startDate), w * 7)
@@ -265,7 +262,7 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
           // WEEKEND WEEK: use configured work/rest pattern
           if (weekendWorkSet.has(d)) {
             // Check recovery Monday
-            if (cfg.enforceRecoveryMonday && needsRecovery && d === 0) {
+            if (ENFORCE_RECOVERY_MONDAY && needsRecovery && d === 0) {
               days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
             } else {
               const shift = assignShift(matinCount, apremCount, emp.id)
@@ -281,7 +278,7 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
           // RECOVERY WEEK: rest Monday (if enabled) + weekend, work rest
           if (isWeekend) {
             days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
-          } else if (cfg.enforceRecoveryMonday && d === 0) {
+          } else if (ENFORCE_RECOVERY_MONDAY && d === 0) {
             days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
           } else {
             const shift = assignShift(matinCount, apremCount, emp.id)
@@ -401,12 +398,12 @@ function detectViolations(
       if (days[i].status !== 'rest') {
         if (streak === 0) streakStart = i
         streak++
-        if (streak === cfg.maxConsecutiveWorkDays + 1) {
+        if (streak === MAX_CONSECUTIVE_WORK_DAYS + 1) {
           violations.push({
             employeeId: empId,
             employeeName: empName,
             type: 'consecutive_days',
-            message: `${empName} travaille ${streak}+ jours consécutifs (max ${cfg.maxConsecutiveWorkDays})`,
+            message: `${empName} travaille ${streak}+ jours consécutifs (max ${MAX_CONSECUTIVE_WORK_DAYS})`,
             dates: days.slice(streakStart, i + 1).map((d) => d.date),
           })
         }
@@ -428,12 +425,12 @@ function detectViolations(
           currentRest = 0
         }
       }
-      if (maxConsecutiveRest < cfg.minConsecutiveRestDays) {
+      if (maxConsecutiveRest < MIN_CONSECUTIVE_REST_DAYS) {
         violations.push({
           employeeId: empId,
           employeeName: empName,
           type: 'insufficient_consecutive_rest',
-          message: `${empName} n'a pas ${cfg.minConsecutiveRestDays} jours de repos consécutifs (semaine du ${weekDays[0].date})`,
+          message: `${empName} n'a pas ${MIN_CONSECUTIVE_REST_DAYS} jours de repos consécutifs (semaine du ${weekDays[0].date})`,
           dates: weekDays.map((d) => d.date),
         })
       }
