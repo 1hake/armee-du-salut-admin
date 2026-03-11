@@ -101,7 +101,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
     <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-xl bg-surface shadow-sm border border-border/60">
       <div
         className="grid min-w-[900px]"
-        style={{ gridTemplateColumns: '50px 120px repeat(14, 1fr)' }}
+        style={{ gridTemplateColumns: '50px minmax(160px, auto) repeat(14, 1fr)' }}
       >
         {/* Header row 1: day names */}
         <div className="col-span-2 border-b border-r border-border/60" />
@@ -160,7 +160,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                 {/* Room name */}
                 <div className="group/room border-r border-b border-border/60 px-2 sm:px-2.5 py-1.5 flex items-center gap-1">
                   <div className="min-w-0">
-                    <div className="text-[12px] sm:text-[13px] font-medium">{room.name}</div>
+                    <div className="text-[12px] sm:text-[13px] font-medium whitespace-nowrap">{room.name}</div>
                     <CapacityEditor
                       room={room}
                       onSave={(capacity) => onUpdateCapacity(room.id, capacity)}

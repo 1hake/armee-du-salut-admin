@@ -9,6 +9,9 @@ import {
   generateAndSaveSchedule,
   getSchedulerConfig,
   saveSchedulerConfig,
+  getScheduleOverrides,
+  addScheduleOverride,
+  deleteScheduleOverride,
 } from '@/server/equipeActions'
 import type { Employee } from '@/server/schema'
 import type { GeneratedSchedule, SchedulerConfig } from '@/lib/schedulerEngine'
@@ -20,6 +23,7 @@ import { ScheduleGrid } from './ScheduleGrid'
 import { ScheduleSummary } from './ScheduleSummary'
 import { EmployeeList } from './EmployeeList'
 import { SchedulerSettings } from './SchedulerSettings'
+import { ScheduleOverrides } from './ScheduleOverrides'
 
 interface Props {
   initialEmployees: Employee[]
@@ -39,6 +43,11 @@ export function EquipeClient({ initialEmployees }: Props) {
   const { data: config = DEFAULT_CONFIG } = useQuery({
     queryKey: ['schedulerConfig'],
     queryFn: () => getSchedulerConfig(),
+  })
+
+  const { data: overrides = [] } = useQuery({
+    queryKey: ['scheduleOverrides'],
+    queryFn: () => getScheduleOverrides(),
   })
 
   const saveConfigMutation = useMutation({
@@ -73,6 +82,22 @@ export function EquipeClient({ initialEmployees }: Props) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
+    },
+  })
+
+  const addOverrideMutation = useMutation({
+    mutationFn: (params: { employeeId: string; date: string; description: string }) =>
+      addScheduleOverride(params.employeeId, params.date, params.description),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scheduleOverrides'] })
+      toast.success('Changement ajoute')
+    },
+  })
+
+  const deleteOverrideMutation = useMutation({
+    mutationFn: (id: string) => deleteScheduleOverride(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['scheduleOverrides'] })
     },
   })
 
@@ -146,6 +171,15 @@ export function EquipeClient({ initialEmployees }: Props) {
               <ScheduleGrid schedule={schedule} config={config} />
             </>
           )}
+
+          <ScheduleOverrides
+            overrides={overrides}
+            employees={employees}
+            onAdd={(employeeId, date, description) =>
+              addOverrideMutation.mutate({ employeeId, date, description })
+            }
+            onDelete={(id) => deleteOverrideMutation.mutate(id)}
+          />
 
           {!schedule && (
             <div className="rounded-xl bg-surface border border-border/60 shadow-sm p-8 sm:p-16 text-center text-muted text-[15px]">

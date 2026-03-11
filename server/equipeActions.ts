@@ -1,8 +1,8 @@
 'use server'
 
 import { db } from './db'
-import { employees, scheduleEntries, schedulerConfig } from './schema'
-import { eq, and, gte, lte } from 'drizzle-orm'
+import { employees, scheduleEntries, schedulerConfig, scheduleOverrides } from './schema'
+import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import {
   generateSchedule,
@@ -113,6 +113,22 @@ export async function generateAndSaveSchedule(
 
   revalidatePath('/equipe')
   return schedule
+}
+
+// ── Schedule Overrides (changements ponctuels) ────────
+
+export async function getScheduleOverrides() {
+  return db.select().from(scheduleOverrides).orderBy(desc(scheduleOverrides.date))
+}
+
+export async function addScheduleOverride(employeeId: string, date: string, description: string) {
+  await db.insert(scheduleOverrides).values({ employeeId, date, description })
+  revalidatePath('/equipe')
+}
+
+export async function deleteScheduleOverride(id: string) {
+  await db.delete(scheduleOverrides).where(eq(scheduleOverrides.id, id))
+  revalidatePath('/equipe')
 }
 
 export async function clearSchedule(startDate: string, endDate: string) {

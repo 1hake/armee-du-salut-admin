@@ -57,6 +57,16 @@ export const organisations = sqliteTable('organisations', {
   notes:     text('notes'),
 })
 
+// ── Schedule Overrides (changements ponctuels) ──────────
+
+export const scheduleOverrides = sqliteTable('schedule_overrides', {
+  id:         text('id').primaryKey().$defaultFn(() => createId()),
+  employeeId: text('employee_id').notNull().references(() => employees.id, { onDelete: 'cascade' }),
+  date:       text('date').notNull(),          // YYYY-MM-DD
+  description: text('description').notNull(),  // e.g. "Repos maladie", "Échange avec Pierre"
+  createdAt:  text('created_at').$defaultFn(() => new Date().toISOString()),
+})
+
 // ── Scheduler Config ────────────────────────────────────
 
 export const schedulerConfig = sqliteTable('scheduler_config', {
@@ -70,3 +80,4 @@ export type Employee = typeof employees.$inferSelect
 export type ScheduleEntry = typeof scheduleEntries.$inferSelect
 export type OrgColor = typeof organisationColors.$inferSelect
 export type Organisation = typeof organisations.$inferSelect
+export type ScheduleOverride = typeof scheduleOverrides.$inferSelect
