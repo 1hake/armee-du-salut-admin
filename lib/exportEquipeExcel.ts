@@ -11,6 +11,9 @@ function parseDate(s: string): Date {
 export function exportEquipeToExcel(schedule: GeneratedSchedule) {
   const wb = XLSX.utils.book_new()
 
+  // All weeks on a single sheet
+  const allData: (string | number)[][] = []
+
   for (let wIdx = 0; wIdx < schedule.weeks.length; wIdx++) {
     const week = schedule.weeks[wIdx]
     const monday = parseDate(week.weekKey)
@@ -20,14 +23,21 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
       return d
     })
 
+    // Blank row between weeks (except before first)
+    if (wIdx > 0) allData.push([])
+
+    // Week title row
+    const firstDate = dates[0]
+    const lastDate = dates[6]
+    allData.push([`Semaine ${wIdx + 1} — ${firstDate.getDate()} ${MONTHS_FR[firstDate.getMonth()]} au ${lastDate.getDate()} ${MONTHS_FR[lastDate.getMonth()]} ${lastDate.getFullYear()}`])
+
     // Header row: empty + day names with dates
     const header: string[] = ['Salarié']
     for (let i = 0; i < 7; i++) {
       header.push(`${DAYS_FR[i]} ${dates[i].getDate()}/${dates[i].getMonth() + 1}`)
     }
     header.push('Total heures')
-
-    const data: (string | number)[][] = [header]
+    allData.push(header)
 
     // Employee rows
     for (const emp of week.employees) {
@@ -43,7 +53,7 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
         }
       }
       row.push(emp.totalHours)
-      data.push(row)
+      allData.push(row)
     }
 
     // Total row
@@ -54,19 +64,16 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
       totalRow.push(`${totalH}h (${workers} pers.)`)
     }
     totalRow.push(week.employees.reduce((sum, emp) => sum + emp.totalHours, 0))
-    data.push(totalRow)
-
-    const ws = XLSX.utils.aoa_to_sheet(data)
-
-    ws['!cols'] = [
-      { wch: 20 },
-      ...Array(7).fill({ wch: 22 }),
-      { wch: 14 },
-    ]
-
-    const label = `Sem ${wIdx + 1}`
-    XLSX.utils.book_append_sheet(wb, ws, label)
+    allData.push(totalRow)
   }
+
+  const planningWs = XLSX.utils.aoa_to_sheet(allData)
+  planningWs['!cols'] = [
+    { wch: 20 },
+    ...Array(7).fill({ wch: 22 }),
+    { wch: 14 },
+  ]
+  XLSX.utils.book_append_sheet(wb, planningWs, 'Planning')
 
   // Summary sheet
   if (schedule.summary.length > 0) {
