@@ -264,7 +264,9 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
             } else {
               const shift = assignShift(matinCount, apremCount, emp.id)
               const status: DayStatus = isWeekend ? 'weekend_work' : 'work'
-              days.push({ date, dayIndex: d, status, shift, hours: cfg.hoursPerDay })
+              // Weekend days always get maxHoursPerDay (8h), weekdays get hoursPerDay (7h)
+              const dayHours = isWeekend ? cfg.maxHoursPerDay : cfg.hoursPerDay
+              days.push({ date, dayIndex: d, status, shift, hours: dayHours })
             }
           } else {
             days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
