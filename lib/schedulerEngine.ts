@@ -9,6 +9,7 @@ export interface SchedulerConfig {
   hoursPerDay: number
   hoursPerWeek: number
   lunchBreak: string
+  lunchBreakHours: number
   shifts: {
     matin: { label: string; time: string }
     aprem: { label: string; time: string }
@@ -25,6 +26,7 @@ export const DEFAULT_CONFIG: SchedulerConfig = {
   hoursPerDay: 7,
   hoursPerWeek: 35,
   lunchBreak: '13h – 14h',
+  lunchBreakHours: 1,
   shifts: {
     matin: { label: 'Matin', time: '8h45 – 16h45' },
     aprem: { label: 'Après-midi', time: '10h15 – 18h15' },
@@ -48,7 +50,8 @@ export interface EmployeeDay {
   dayIndex: number    // 0=Lun … 6=Dim
   status: DayStatus
   shift: Shift | null // null for rest
-  hours: number       // hoursPerDay for work, 0 for rest
+  hours: number       // heures travaillées (ex: 7h)
+  presenceHours: number // heures de présence (travail + pause déjeuner)
 }
 
 export interface EmployeeWeek {
@@ -57,6 +60,7 @@ export interface EmployeeWeek {
   weekKey: string
   days: EmployeeDay[]
   totalHours: number
+  totalPresenceHours: number
   isWeekendWorker: boolean
 }
 
@@ -86,9 +90,11 @@ export interface EmployeeSummary {
   employeeName: string
   totalWeekends: number
   totalHours: number
+  totalPresenceHours: number
   totalWorkDays: number
   totalRestDays: number
   avgHoursPerWeek: number
+  avgPresencePerWeek: number
   matinCount: number
   apremCount: number
 }
@@ -260,34 +266,34 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
           if (weekendWorkSet.has(d)) {
             // Check recovery Monday
             if (cfg.enforceRecoveryMonday && needsRecovery && d === 0) {
-              days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
+              days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
             } else {
               const shift = assignShift(matinCount, apremCount, emp.id)
               const status: DayStatus = isWeekend ? 'weekend_work' : 'work'
               // Weekend days always get maxHoursPerDay (8h), weekdays get hoursPerDay (7h)
               const dayHours = isWeekend ? cfg.maxHoursPerDay : cfg.hoursPerDay
-              days.push({ date, dayIndex: d, status, shift, hours: dayHours })
+              days.push({ date, dayIndex: d, status, shift, hours: dayHours, presenceHours: 0 })
             }
           } else {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
           }
         } else if (needsRecovery) {
           // RECOVERY WEEK: rest Monday (if enabled) + weekend, work rest
           if (isWeekend) {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
           } else if (cfg.enforceRecoveryMonday && d === 0) {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
           } else {
             const shift = assignShift(matinCount, apremCount, emp.id)
-            days.push({ date, dayIndex: d, status: 'work', shift, hours: cfg.hoursPerDay })
+            days.push({ date, dayIndex: d, status: 'work', shift, hours: cfg.hoursPerDay, presenceHours: 0 })
           }
         } else {
           // NORMAL WEEK: Mon–Fri work, Sat–Sun rest
           if (isWeekend) {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0 })
+            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
           } else {
             const shift = assignShift(matinCount, apremCount, emp.id)
-            days.push({ date, dayIndex: d, status: 'work', shift, hours: cfg.hoursPerDay })
+            days.push({ date, dayIndex: d, status: 'work', shift, hours: cfg.hoursPerDay, presenceHours: 0 })
           }
         }
       }
@@ -299,6 +305,7 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
         weekKey,
         days,
         totalHours,
+        totalPresenceHours: 0,
         isWeekendWorker,
       })
     }
@@ -345,6 +352,17 @@ export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
       for (const ew of empWeeks) {
         ew.totalHours = ew.days.reduce((s, d) => s + d.hours, 0)
       }
+    }
+  }
+
+  // ── Compute presence hours (travail + pause déjeuner) ──
+  const lunchH = cfg.lunchBreakHours ?? 1
+  for (const week of allWeeks) {
+    for (const ew of week.employees) {
+      for (const day of ew.days) {
+        day.presenceHours = day.status !== 'rest' ? day.hours + lunchH : 0
+      }
+      ew.totalPresenceHours = ew.days.reduce((s, d) => s + d.presenceHours, 0)
     }
   }
 
@@ -437,6 +455,7 @@ function buildSummary(
   return employees.map((emp) => {
     let totalWeekends = 0
     let totalHours = 0
+    let totalPresenceHours = 0
     let totalWorkDays = 0
     let totalRestDays = 0
 
@@ -445,6 +464,7 @@ function buildSummary(
       if (!ew) continue
       if (ew.isWeekendWorker) totalWeekends++
       totalHours += ew.totalHours
+      totalPresenceHours += ew.totalPresenceHours
       for (const day of ew.days) {
         if (day.status === 'rest') totalRestDays++
         else totalWorkDays++
@@ -456,9 +476,11 @@ function buildSummary(
       employeeName: emp.name,
       totalWeekends,
       totalHours,
+      totalPresenceHours,
       totalWorkDays,
       totalRestDays,
       avgHoursPerWeek: totalWeeks > 0 ? Math.round((totalHours / totalWeeks) * 10) / 10 : 0,
+      avgPresencePerWeek: totalWeeks > 0 ? Math.round((totalPresenceHours / totalWeeks) * 10) / 10 : 0,
       matinCount: matinCount.get(emp.id) ?? 0,
       apremCount: apremCount.get(emp.id) ?? 0,
     }

@@ -44,6 +44,8 @@ export function ScheduleGrid({ schedule, config }: Props) {
           </div>
         ))}
         <span className="text-border">|</span>
+        <span className="text-muted">Xh <span className="text-[10px]">(Yh) = travail (presence)</span></span>
+        <span className="text-border">|</span>
         <div className="flex items-center gap-1.5">
           <span className="w-2 h-2 rounded-full bg-blue-400" />
           <span className="text-muted">{config.shifts.matin.label} ({config.shifts.matin.time})</span>
@@ -120,7 +122,7 @@ export function ScheduleGrid({ schedule, config }: Props) {
                     ) : (
                       <div className="space-y-0.5">
                         <div className={`text-[11px] font-medium ${style.text}`}>
-                          {day.hours}h
+                          {day.hours}h <span className="text-[9px] text-muted font-normal">({day.presenceHours}h)</span>
                         </div>
                         {day.shift && shiftColor && (
                           <div className={`text-[9px] font-medium ${shiftColor.text} flex items-center justify-center gap-0.5`}>
@@ -143,13 +145,14 @@ export function ScheduleGrid({ schedule, config }: Props) {
             </div>
             {dates.map((_, i) => {
               const totalForDay = week.employees.reduce((sum, emp) => sum + emp.days[i].hours, 0)
+              const totalPresForDay = week.employees.reduce((sum, emp) => sum + emp.days[i].presenceHours, 0)
               const workersForDay = week.employees.filter((emp) => emp.days[i].status !== 'rest').length
               return (
                 <div
                   key={i}
                   className={`border-border/60 ${i < 6 ? 'border-r' : ''} px-1 py-2 text-center bg-bg/30`}
                 >
-                  <div className="text-[11px] font-semibold">{totalForDay}h</div>
+                  <div className="text-[11px] font-semibold">{totalForDay}h <span className="text-[9px] text-muted font-normal">({totalPresForDay}h)</span></div>
                   <div className="text-[9px] text-muted">{workersForDay} pers.</div>
                 </div>
               )

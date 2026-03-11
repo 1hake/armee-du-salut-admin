@@ -88,14 +88,28 @@ export function SchedulerSettings({ config, onSave, saving }: Props) {
                 className="w-full border border-border rounded-lg px-2.5 py-1.5 text-[12px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
               />
             </div>
-            <div>
-              <label className="block text-[11px] text-muted mb-1">Pause dejeuner</label>
-              <input
-                type="text"
-                value={draft.lunchBreak}
-                onChange={(e) => update('lunchBreak', e.target.value)}
-                className="w-full border border-border rounded-lg px-2.5 py-1.5 text-[12px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="block text-[11px] text-muted mb-1">Pause dejeuner</label>
+                <input
+                  type="text"
+                  value={draft.lunchBreak}
+                  onChange={(e) => update('lunchBreak', e.target.value)}
+                  className="w-full border border-border rounded-lg px-2.5 py-1.5 text-[12px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                />
+              </div>
+              <div>
+                <label className="block text-[11px] text-muted mb-1">Duree pause (h)</label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="3"
+                  value={draft.lunchBreakHours ?? 1}
+                  onChange={(e) => update('lunchBreakHours', Number(e.target.value))}
+                  className="w-full border border-border rounded-lg px-2.5 py-1.5 text-[12px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20"
+                />
+              </div>
             </div>
           </section>
 

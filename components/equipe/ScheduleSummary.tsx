@@ -38,15 +38,18 @@ export function ScheduleSummary({ summary, violations, weeks, config }: Props) {
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Weekends</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Jours travailles</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Jours repos</th>
-              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Total heures</th>
-              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Moy. h/sem</th>
+              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">H. travail</th>
+              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">H. presence</th>
+              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Moy. travail/sem</th>
+              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Moy. presence/sem</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-blue-500">Matin</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-amber-500">Aprem</th>
             </tr>
           </thead>
           <tbody>
             {summary.map((s) => {
-              const avgHoursPerWeek = s.avgHoursPerWeek.toFixed(1)
+              const avgWork = s.avgHoursPerWeek.toFixed(1)
+              const avgPres = s.avgPresencePerWeek.toFixed(1)
               const hoursOk = Math.abs(s.avgHoursPerWeek - config.hoursPerWeek) <= 1
               return (
                 <tr key={s.employeeId} className="border-b border-border/40 last:border-0 hover:bg-bg/30 transition-colors">
@@ -55,9 +58,11 @@ export function ScheduleSummary({ summary, violations, weeks, config }: Props) {
                   <td className="px-3.5 py-2.5 text-center">{s.totalWorkDays}</td>
                   <td className="px-3.5 py-2.5 text-center">{s.totalRestDays}</td>
                   <td className="px-3.5 py-2.5 text-center">{s.totalHours}h</td>
+                  <td className="px-3.5 py-2.5 text-center">{s.totalPresenceHours}h</td>
                   <td className={`px-3.5 py-2.5 text-center font-medium ${hoursOk ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {avgHoursPerWeek}h
+                    {avgWork}h
                   </td>
+                  <td className="px-3.5 py-2.5 text-center">{avgPres}h</td>
                   <td className="px-3.5 py-2.5 text-center text-blue-600">{s.matinCount}</td>
                   <td className="px-3.5 py-2.5 text-center text-amber-600">{s.apremCount}</td>
                 </tr>

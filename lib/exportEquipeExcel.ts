@@ -36,7 +36,7 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
     for (let i = 0; i < 7; i++) {
       header.push(`${DAYS_FR[i]} ${dates[i].getDate()}/${dates[i].getMonth() + 1}`)
     }
-    header.push('Total heures')
+    header.push('H. travail', 'H. presence')
     allData.push(header)
 
     // Employee rows
@@ -52,7 +52,7 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
           row.push(`${day.hours}h — ${shiftLabel}`)
         }
       }
-      row.push(emp.totalHours)
+      row.push(emp.totalHours, emp.totalPresenceHours)
       allData.push(row)
     }
 
@@ -63,7 +63,10 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
       const workers = week.employees.filter((emp) => emp.days[i].status !== 'rest').length
       totalRow.push(`${totalH}h (${workers} pers.)`)
     }
-    totalRow.push(week.employees.reduce((sum, emp) => sum + emp.totalHours, 0))
+    totalRow.push(
+      week.employees.reduce((sum, emp) => sum + emp.totalHours, 0),
+      week.employees.reduce((sum, emp) => sum + emp.totalPresenceHours, 0),
+    )
     allData.push(totalRow)
   }
 
@@ -72,18 +75,19 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
     { wch: 20 },
     ...Array(7).fill({ wch: 22 }),
     { wch: 14 },
+    { wch: 14 },
   ]
   XLSX.utils.book_append_sheet(wb, planningWs, 'Planning')
 
   // Summary sheet
   if (schedule.summary.length > 0) {
-    const summaryHeader = ['Salarié', 'Weekends', 'Jours travaillés', 'Jours repos', 'Heures totales', 'Matin', 'Après-midi']
+    const summaryHeader = ['Salarié', 'Weekends', 'Jours travaillés', 'Jours repos', 'H. travail', 'H. présence', 'Moy. travail/sem', 'Moy. présence/sem', 'Matin', 'Après-midi']
     const summaryData: (string | number)[][] = [summaryHeader]
     for (const s of schedule.summary) {
-      summaryData.push([s.employeeName, s.totalWeekends, s.totalWorkDays, s.totalRestDays, s.totalHours, s.matinCount, s.apremCount])
+      summaryData.push([s.employeeName, s.totalWeekends, s.totalWorkDays, s.totalRestDays, s.totalHours, s.totalPresenceHours, s.avgHoursPerWeek, s.avgPresencePerWeek, s.matinCount, s.apremCount])
     }
     const ws = XLSX.utils.aoa_to_sheet(summaryData)
-    ws['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 12 }]
+    ws['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 10 }, { wch: 12 }]
     XLSX.utils.book_append_sheet(wb, ws, 'Résumé')
   }
 
