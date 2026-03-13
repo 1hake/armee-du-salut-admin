@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   getEmployees,
   addEmployee,
+  renameEmployee,
   deleteEmployee,
   generateAndSaveSchedule,
   getScheduleOverrides,
@@ -39,6 +40,14 @@ export function EquipeClient({ initialEmployees }: Props) {
   const { data: overrides = [] } = useQuery({
     queryKey: ['scheduleOverrides'],
     queryFn: () => getScheduleOverrides(),
+  })
+
+  const renameEmployeeMutation = useMutation({
+    mutationFn: (params: { id: string; name: string }) => renameEmployee(params.id, params.name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['employees'] })
+      toast.success('Nom modifie')
+    },
   })
 
   const addEmployeeMutation = useMutation({
@@ -105,6 +114,7 @@ export function EquipeClient({ initialEmployees }: Props) {
           <EmployeeList
             employees={employees}
             onAdd={(name) => addEmployeeMutation.mutate(name)}
+            onRename={(id, name) => renameEmployeeMutation.mutate({ id, name })}
             onDelete={(id) => deleteEmployeeMutation.mutate(id)}
           />
 

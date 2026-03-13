@@ -23,6 +23,11 @@ export async function addEmployee(name: string) {
   revalidatePath('/equipe')
 }
 
+export async function renameEmployee(id: string, name: string) {
+  await db.update(employees).set({ name }).where(eq(employees.id, id))
+  revalidatePath('/equipe')
+}
+
 export async function deleteEmployee(id: string) {
   await db.delete(employees).where(eq(employees.id, id))
   revalidatePath('/equipe')
