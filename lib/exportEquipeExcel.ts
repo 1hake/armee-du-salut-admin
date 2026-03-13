@@ -1,6 +1,6 @@
 import * as XLSX from 'xlsx'
 import type { GeneratedSchedule } from './schedulerEngine'
-import { SHIFT_LABELS } from './schedulerEngine'
+import { SHIFT_INFO, CYCLE_WEEKS } from './schedulerEngine'
 import { DAYS_FR, MONTHS_FR } from './weekUtils'
 
 function parseDate(s: string): Date {
@@ -29,14 +29,16 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
     // Week title row
     const firstDate = dates[0]
     const lastDate = dates[6]
-    allData.push([`Semaine ${wIdx + 1} — ${firstDate.getDate()} ${MONTHS_FR[firstDate.getMonth()]} au ${lastDate.getDate()} ${MONTHS_FR[lastDate.getMonth()]} ${lastDate.getFullYear()}`])
+    const cycleNum = Math.floor(wIdx / CYCLE_WEEKS) + 1
+    const weekInCycle = (wIdx % CYCLE_WEEKS) + 1
+    allData.push([`Cycle ${cycleNum} · Semaine ${weekInCycle} — ${firstDate.getDate()} ${MONTHS_FR[firstDate.getMonth()]} au ${lastDate.getDate()} ${MONTHS_FR[lastDate.getMonth()]} ${lastDate.getFullYear()}`])
 
-    // Header row: empty + day names with dates
+    // Header row
     const header: string[] = ['Salarié']
     for (let i = 0; i < 7; i++) {
       header.push(`${DAYS_FR[i]} ${dates[i].getDate()}/${dates[i].getMonth() + 1}`)
     }
-    header.push('H. travail', 'H. presence')
+    header.push('H. travail')
     allData.push(header)
 
     // Employee rows
@@ -48,11 +50,11 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
         if (day.status === 'rest') {
           row.push('Repos')
         } else {
-          const shiftLabel = day.shift ? SHIFT_LABELS[day.shift].time : ''
-          row.push(`${day.hours}h — ${shiftLabel}`)
+          const info = SHIFT_INFO[day.shiftCode]
+          row.push(`${day.shiftCode} — ${info.label} ${info.hours}h`)
         }
       }
-      row.push(emp.totalHours, emp.totalPresenceHours)
+      row.push(emp.totalHours)
       allData.push(row)
     }
 
@@ -65,7 +67,6 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
     }
     totalRow.push(
       week.employees.reduce((sum, emp) => sum + emp.totalHours, 0),
-      week.employees.reduce((sum, emp) => sum + emp.totalPresenceHours, 0),
     )
     allData.push(totalRow)
   }
@@ -75,19 +76,18 @@ export function exportEquipeToExcel(schedule: GeneratedSchedule) {
     { wch: 20 },
     ...Array(7).fill({ wch: 22 }),
     { wch: 14 },
-    { wch: 14 },
   ]
   XLSX.utils.book_append_sheet(wb, planningWs, 'Planning')
 
   // Summary sheet
   if (schedule.summary.length > 0) {
-    const summaryHeader = ['Salarié', 'Weekends', 'Jours travaillés', 'Jours repos', 'H. travail', 'H. présence', 'Moy. travail/sem', 'Moy. présence/sem', 'Matin', 'Après-midi']
+    const summaryHeader = ['Salarié', 'Weekends', 'Jours travaillés', 'Jours repos', 'H. travail', 'Moy./sem', 'Matin', 'Soir', 'Journée']
     const summaryData: (string | number)[][] = [summaryHeader]
     for (const s of schedule.summary) {
-      summaryData.push([s.employeeName, s.totalWeekends, s.totalWorkDays, s.totalRestDays, s.totalHours, s.totalPresenceHours, s.avgHoursPerWeek, s.avgPresencePerWeek, s.matinCount, s.apremCount])
+      summaryData.push([s.employeeName, s.totalWeekends, s.totalWorkDays, s.totalRestDays, s.totalHours, s.avgHoursPerWeek, s.matinCount, s.soirCount, s.journeeCount])
     }
     const ws = XLSX.utils.aoa_to_sheet(summaryData)
-    ws['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 18 }, { wch: 18 }, { wch: 10 }, { wch: 12 }]
+    ws['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 18 }, { wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 10 }, { wch: 10 }, { wch: 10 }]
     XLSX.utils.book_append_sheet(wb, ws, 'Résumé')
   }
 

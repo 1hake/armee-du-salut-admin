@@ -1,54 +1,88 @@
 // ── Types ───────────────────────────────────────────────
 
+export type ShiftCode = 'M' | 'S' | 'J' | 'W' | 'R'
 export type DayStatus = 'work' | 'rest' | 'weekend_work'
-export type Shift = 'matin' | 'aprem'
 
-// ── Scheduler Config ────────────────────────────────────
+// Kept for backward compat with grid/summary
+export type Shift = 'M' | 'S' | 'J' | 'W'
 
-export interface SchedulerConfig {
-  hoursPerDay: number
-  hoursPerWeek: number
-  lunchBreak: string
-  lunchBreakHours: number
-  shifts: {
-    matin: { label: string; time: string }
-    aprem: { label: string; time: string }
-  }
-  maxHoursPerDay: number
-  weekendWorkerWorkDays: number[]   // day indices (0=Lun) where weekend workers work
+// ── Fixed shift definitions ─────────────────────────────
+
+export const SHIFT_INFO: Record<ShiftCode, { label: string; time: string; hours: number; color: string }> = {
+  M: { label: 'Matin',    time: '8h45–16h45', hours: 7, color: 'blue' },
+  S: { label: 'Soir',     time: '10h15–18h15', hours: 7, color: 'amber' },
+  J: { label: 'Journée',  time: '8h45–17h45', hours: 8, color: 'emerald' },
+  W: { label: 'Week-end',  time: '9h00–17h00', hours: 7, color: 'violet' },
+  R: { label: 'Repos',    time: '',            hours: 0, color: 'gray' },
 }
 
-// Hard-coded engine constraints (not user-configurable)
-const MAX_CONSECUTIVE_WORK_DAYS = 6
-const MIN_CONSECUTIVE_REST_DAYS = 2
-const ENFORCE_RECOVERY_MONDAY = true
+export const HOURS_PER_WEEK = 35
+export const CYCLE_WEEKS = 5
 
-export const DEFAULT_CONFIG: SchedulerConfig = {
-  hoursPerDay: 7,
-  hoursPerWeek: 35,
-  lunchBreak: '13h – 14h',
-  lunchBreakHours: 1,
-  shifts: {
-    matin: { label: 'Matin', time: '8h45 – 16h45' },
-    aprem: { label: 'Après-midi', time: '10h15 – 18h15' },
-  },
-  maxHoursPerDay: 8,
-  weekendWorkerWorkDays: [0, 1, 2, 5, 6],  // Mon-Wed + Sat-Sun
-}
+// ── Fixed 5-week cycle pattern (by position 0–4) ───────
 
-// Keep backward-compat exports (used by some components)
-export const SHIFT_LABELS = DEFAULT_CONFIG.shifts
-export const HOURS_PER_DAY = DEFAULT_CONFIG.hoursPerDay
-export const HOURS_PER_WEEK = DEFAULT_CONFIG.hoursPerWeek
-export const LUNCH_BREAK = DEFAULT_CONFIG.lunchBreak
+const CYCLE_PATTERN: ShiftCode[][][] = [
+  // Position 0
+  [
+    ['J','J','J','R','R','W','W'],
+    ['R','J','J','J','J','R','R'],
+    ['J','J','J','R','R','W','W'],
+    ['R','J','J','J','J','R','R'],
+    ['M','S','M','S','M','R','R'],
+  ],
+  // Position 1
+  [
+    ['J','J','J','R','R','W','W'],
+    ['R','J','J','J','J','R','R'],
+    ['S','M','S','M','S','R','R'],
+    ['J','J','J','R','R','W','W'],
+    ['R','J','J','J','J','R','R'],
+  ],
+  // Position 2
+  [
+    ['M','S','M','S','M','R','R'],
+    ['J','J','J','R','R','W','W'],
+    ['R','J','J','J','J','R','R'],
+    ['J','J','J','R','R','W','W'],
+    ['R','J','J','J','J','R','R'],
+  ],
+  // Position 3
+  [
+    ['S','M','S','M','S','R','R'],
+    ['J','J','J','R','R','W','W'],
+    ['R','J','J','J','J','R','R'],
+    ['M','S','M','S','M','R','R'],
+    ['M','S','M','R','R','W','W'],
+  ],
+  // Position 4
+  [
+    ['M','S','M','S','M','R','R'],
+    ['S','M','S','M','S','R','R'],
+    ['J','J','J','R','R','W','W'],
+    ['R','J','J','J','J','R','R'],
+    ['S','M','S','R','R','W','W'],
+  ],
+]
+
+// Weekend worker positions per week of the cycle
+const WEEKEND_POSITIONS: [number, number][] = [
+  [0, 1],
+  [2, 3],
+  [0, 4],
+  [1, 2],
+  [3, 4],
+]
+
+// ── Data structures ─────────────────────────────────────
 
 export interface EmployeeDay {
   date: string        // YYYY-MM-DD
   dayIndex: number    // 0=Lun … 6=Dim
   status: DayStatus
-  shift: Shift | null // null for rest
-  hours: number       // heures travaillées (ex: 7h)
-  presenceHours: number // heures de présence (travail + pause déjeuner)
+  shift: Shift | null
+  hours: number
+  presenceHours: number
+  shiftCode: ShiftCode
 }
 
 export interface EmployeeWeek {
@@ -70,7 +104,7 @@ export interface WeekSchedule {
 export interface Violation {
   employeeId: string
   employeeName: string
-  type: 'consecutive_days' | 'hours_mismatch' | 'insufficient_consecutive_rest'
+  type: string
   message: string
   dates?: string[]
 }
@@ -93,7 +127,8 @@ export interface EmployeeSummary {
   avgHoursPerWeek: number
   avgPresencePerWeek: number
   matinCount: number
-  apremCount: number
+  soirCount: number
+  journeeCount: number
 }
 
 export interface Employee {
@@ -104,8 +139,7 @@ export interface Employee {
 export interface GenerateOptions {
   employees: Employee[]
   startDate: string  // YYYY-MM-DD (must be a Monday)
-  weeks?: number     // if omitted, auto-calculated cycle length
-  config?: SchedulerConfig
+  cycles?: number    // number of 5-week cycles (default 1)
 }
 
 // ── Helpers ─────────────────────────────────────────────
@@ -128,316 +162,100 @@ function parseDateStr(s: string): Date {
   return new Date(y, m - 1, d)
 }
 
-// ── Auto cycle length ───────────────────────────────────
-
-function computeCycleLength(employeeCount: number): number {
-  if (employeeCount <= 2) return 2
-  return employeeCount % 2 === 0 ? employeeCount : employeeCount * 2
+function shiftToStatus(code: ShiftCode): DayStatus {
+  if (code === 'R') return 'rest'
+  if (code === 'W') return 'weekend_work'
+  return 'work'
 }
 
-// ── Weekend rotation ────────────────────────────────────
-
-function generateWeekendRotation(
-  employeeIds: string[],
-  weeks: number,
-): [string, string][] {
-  const n = employeeIds.length
-  if (n < 2) throw new Error('Au moins 2 salariés requis')
-
-  const allPairs: [number, number][] = []
-  for (let i = 0; i < n; i++) {
-    for (let j = i + 1; j < n; j++) {
-      allPairs.push([i, j])
-    }
-  }
-
-  let baseCycle: [number, number][]
-
-  if (n === 5) {
-    baseCycle = [[0, 1], [2, 3], [4, 0], [1, 2], [3, 4]]
-  } else {
-    baseCycle = []
-    const count = new Array(n).fill(0)
-    const used = new Set<string>()
-    const cycleLen = Math.ceil(n / 2) * 2
-
-    for (let w = 0; w < cycleLen; w++) {
-      let bestPair: [number, number] | null = null
-      let bestScore = Infinity
-      const prev = baseCycle[baseCycle.length - 1]
-
-      for (const [a, b] of allPairs) {
-        if (used.has(`${a}-${b}`)) continue
-        if (prev && (prev.includes(a) || prev.includes(b))) continue
-        const score = count[a] + count[b]
-        if (score < bestScore) { bestScore = score; bestPair = [a, b] }
-      }
-      if (!bestPair) {
-        for (const [a, b] of allPairs) {
-          if (used.has(`${a}-${b}`)) continue
-          const score = count[a] + count[b]
-          if (score < bestScore) { bestScore = score; bestPair = [a, b] }
-        }
-      }
-      if (!bestPair) break
-      baseCycle.push(bestPair)
-      used.add(`${bestPair[0]}-${bestPair[1]}`)
-      count[bestPair[0]]++
-      count[bestPair[1]]++
-    }
-  }
-
-  const rotation: [string, string][] = []
-  for (let w = 0; w < weeks; w++) {
-    const pair = baseCycle[w % baseCycle.length]
-    rotation.push([employeeIds[pair[0]], employeeIds[pair[1]]])
-  }
-  return rotation
-}
-
-// ── Shift assignment ────────────────────────────────────
-
-function assignShift(
-  matinCount: Map<string, number>,
-  apremCount: Map<string, number>,
-  empId: string,
-): Shift {
-  const m = matinCount.get(empId) ?? 0
-  const a = apremCount.get(empId) ?? 0
-  const shift: Shift = m <= a ? 'matin' : 'aprem'
-  if (shift === 'matin') {
-    matinCount.set(empId, m + 1)
-  } else {
-    apremCount.set(empId, a + 1)
-  }
-  return shift
+function shiftToShift(code: ShiftCode): Shift | null {
+  if (code === 'R') return null
+  return code
 }
 
 // ── Main generator ──────────────────────────────────────
 
 export function generateSchedule(options: GenerateOptions): GeneratedSchedule {
   const { employees, startDate } = options
-  const cfg = options.config ?? DEFAULT_CONFIG
-  const employeeIds = employees.map((e) => e.id)
-  const employeeMap = new Map(employees.map((e) => [e.id, e.name]))
+  const cycles = options.cycles ?? 1
+  const totalWeeks = cycles * CYCLE_WEEKS
 
-  const cycleLength = computeCycleLength(employees.length)
-  const weeks = options.weeks ?? cycleLength
-
-  const weekendRotation = generateWeekendRotation(employeeIds, weeks)
-
-  const matinCount = new Map<string, number>()
-  const apremCount = new Map<string, number>()
-
-  const lastPair = weekendRotation[weeks - 1]
-  let prevWeekendWorkerIds = new Set<string>(lastPair)
+  if (employees.length !== 5) {
+    throw new Error('Exactement 5 salariés requis pour ce planning')
+  }
 
   const allWeeks: WeekSchedule[] = []
+  const lunchBreakHours = 1
 
-  // Pre-compute day sets from config
-  const weekendWorkSet = new Set(cfg.weekendWorkerWorkDays)
+  for (let c = 0; c < cycles; c++) {
+    // Each cycle shifts positions by c (employee i gets position (i + c) % 5)
+    const offset = c % 5
 
+    for (let w = 0; w < CYCLE_WEEKS; w++) {
+      const globalWeek = c * CYCLE_WEEKS + w
+      const monday = addDays(parseDateStr(startDate), globalWeek * 7)
+      const weekKey = formatDate(monday)
 
-  for (let w = 0; w < weeks; w++) {
-    const monday = addDays(parseDateStr(startDate), w * 7)
-    const weekKey = formatDate(monday)
-    const [ww1, ww2] = weekendRotation[w]
-    const weekendWorkerSet = new Set([ww1, ww2])
+      // Weekend workers for this week (shifted positions)
+      const [wp1, wp2] = WEEKEND_POSITIONS[w]
+      // Find which employees occupy those positions after shift
+      const ww1 = employees[(5 - offset + wp1) % 5]
+      const ww2 = employees[(5 - offset + wp2) % 5]
 
-    const recoverySet = new Set(prevWeekendWorkerIds)
+      const employeeWeeks: EmployeeWeek[] = []
 
-    const employeeWeeks: EmployeeWeek[] = []
+      for (let empIdx = 0; empIdx < employees.length; empIdx++) {
+        const emp = employees[empIdx]
+        const position = (empIdx + offset) % 5
+        const weekPattern = CYCLE_PATTERN[position][w]
+        const isWeekendWorker = weekPattern.includes('W')
 
-    for (const emp of employees) {
-      const isWeekendWorker = weekendWorkerSet.has(emp.id)
-      const needsRecovery = recoverySet.has(emp.id)
+        const days: EmployeeDay[] = []
+        let weekHours = 0
+        let weekPresence = 0
 
-      const days: EmployeeDay[] = []
+        for (let d = 0; d < 7; d++) {
+          const date = formatDate(addDays(monday, d))
+          const code = weekPattern[d]
+          const hours = SHIFT_INFO[code].hours
+          const presenceHours = code !== 'R' ? hours + lunchBreakHours : 0
 
-      for (let d = 0; d < 7; d++) {
-        const date = formatDate(addDays(monday, d))
-        const isWeekend = d >= 5
-
-        if (isWeekendWorker) {
-          // WEEKEND WEEK: use configured work/rest pattern
-          if (weekendWorkSet.has(d)) {
-            // Check recovery Monday
-            if (ENFORCE_RECOVERY_MONDAY && needsRecovery && d === 0) {
-              days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
-            } else {
-              const shift = assignShift(matinCount, apremCount, emp.id)
-              const status: DayStatus = isWeekend ? 'weekend_work' : 'work'
-              // Weekend days always get maxHoursPerDay (8h), weekdays get hoursPerDay (7h)
-              const dayHours = isWeekend ? cfg.maxHoursPerDay : cfg.hoursPerDay
-              days.push({ date, dayIndex: d, status, shift, hours: dayHours, presenceHours: 0 })
-            }
-          } else {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
-          }
-        } else if (needsRecovery) {
-          // RECOVERY WEEK: rest Monday (if enabled) + weekend, work rest
-          if (isWeekend) {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
-          } else if (ENFORCE_RECOVERY_MONDAY && d === 0) {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
-          } else {
-            const shift = assignShift(matinCount, apremCount, emp.id)
-            days.push({ date, dayIndex: d, status: 'work', shift, hours: cfg.hoursPerDay, presenceHours: 0 })
-          }
-        } else {
-          // NORMAL WEEK: Mon–Fri work, Sat–Sun rest
-          if (isWeekend) {
-            days.push({ date, dayIndex: d, status: 'rest', shift: null, hours: 0, presenceHours: 0 })
-          } else {
-            const shift = assignShift(matinCount, apremCount, emp.id)
-            days.push({ date, dayIndex: d, status: 'work', shift, hours: cfg.hoursPerDay, presenceHours: 0 })
-          }
-        }
-      }
-
-      const totalHours = days.reduce((sum, day) => sum + day.hours, 0)
-      employeeWeeks.push({
-        employeeId: emp.id,
-        employeeName: emp.name,
-        weekKey,
-        days,
-        totalHours,
-        totalPresenceHours: 0,
-        isWeekendWorker,
-      })
-    }
-
-    allWeeks.push({ weekKey, weekendWorkerIds: [ww1, ww2], employees: employeeWeeks })
-
-    prevWeekendWorkerIds = weekendWorkerSet
-  }
-
-  // ── Cycle-wide hours distribution ──────────────────────
-  // Target: average hoursPerWeek over the cycle, using only integer hours
-  // between hoursPerDay and maxHoursPerDay.
-  // Strategy: start all work days at hoursPerDay, then upgrade some to +1h
-  // (up to maxHoursPerDay) to fill the deficit. Prioritize shorter weeks first.
-  for (const emp of employees) {
-    const empWeeks = allWeeks.map((w) => w.employees.find((e) => e.employeeId === emp.id)!)
-    const totalTarget = cfg.hoursPerWeek * weeks
-    const totalCurrent = empWeeks.reduce((s, ew) => s + ew.totalHours, 0)
-    let deficit = totalTarget - totalCurrent
-
-    if (deficit > 0) {
-      // Collect all upgradeable days (work days below maxHoursPerDay)
-      // Sort by week length (shorter weeks first) to spread the load
-      const upgradeable: { day: EmployeeDay; weekIdx: number; workDays: number }[] = []
-      empWeeks.forEach((ew, wi) => {
-        const workDays = ew.days.filter((d) => d.status !== 'rest').length
-        for (const day of ew.days) {
-          if (day.status !== 'rest' && day.hours < cfg.maxHoursPerDay) {
-            upgradeable.push({ day, weekIdx: wi, workDays })
-          }
-        }
-      })
-      // Shorter weeks first so recovery weeks get extra hours before normal weeks
-      upgradeable.sort((a, b) => a.workDays - b.workDays)
-
-      for (const item of upgradeable) {
-        if (deficit <= 0) break
-        const canAdd = Math.min(cfg.maxHoursPerDay - item.day.hours, deficit)
-        item.day.hours += canAdd
-        deficit -= canAdd
-      }
-
-      // Recalculate week totals
-      for (const ew of empWeeks) {
-        ew.totalHours = ew.days.reduce((s, d) => s + d.hours, 0)
-      }
-    }
-  }
-
-  // ── Compute presence hours (travail + pause déjeuner) ──
-  const lunchH = cfg.lunchBreakHours ?? 1
-  for (const week of allWeeks) {
-    for (const ew of week.employees) {
-      for (const day of ew.days) {
-        day.presenceHours = day.status !== 'rest' ? day.hours + lunchH : 0
-      }
-      ew.totalPresenceHours = ew.days.reduce((s, d) => s + d.presenceHours, 0)
-    }
-  }
-
-  const violations = detectViolations(allWeeks, employeeMap, cfg)
-  const summary = buildSummary(allWeeks, employees, weeks, matinCount, apremCount)
-
-  return { weeks: allWeeks, violations, summary, cycleLength }
-}
-
-// ── Violation detection ─────────────────────────────────
-
-function detectViolations(
-  weeks: WeekSchedule[],
-  employeeMap: Map<string, string>,
-  cfg: SchedulerConfig,
-): Violation[] {
-  const violations: Violation[] = []
-
-  const employeeDays = new Map<string, EmployeeDay[]>()
-  for (const week of weeks) {
-    for (const ew of week.employees) {
-      const existing = employeeDays.get(ew.employeeId) ?? []
-      existing.push(...ew.days)
-      employeeDays.set(ew.employeeId, existing)
-    }
-  }
-
-  for (const [empId, days] of employeeDays) {
-    const empName = employeeMap.get(empId) ?? empId
-
-    // Check max consecutive work days
-    let streak = 0
-    let streakStart = 0
-
-    for (let i = 0; i < days.length; i++) {
-      if (days[i].status !== 'rest') {
-        if (streak === 0) streakStart = i
-        streak++
-        if (streak === MAX_CONSECUTIVE_WORK_DAYS + 1) {
-          violations.push({
-            employeeId: empId,
-            employeeName: empName,
-            type: 'consecutive_days',
-            message: `${empName} travaille ${streak}+ jours consécutifs (max ${MAX_CONSECUTIVE_WORK_DAYS})`,
-            dates: days.slice(streakStart, i + 1).map((d) => d.date),
+          days.push({
+            date,
+            dayIndex: d,
+            status: shiftToStatus(code),
+            shift: shiftToShift(code),
+            hours,
+            presenceHours,
+            shiftCode: code,
           })
-        }
-      } else {
-        streak = 0
-      }
-    }
 
-    // Check min consecutive rest days per week
-    for (let weekStart = 0; weekStart + 6 < days.length; weekStart += 7) {
-      const weekDays = days.slice(weekStart, weekStart + 7)
-      let maxConsecutiveRest = 0
-      let currentRest = 0
-      for (const day of weekDays) {
-        if (day.status === 'rest') {
-          currentRest++
-          if (currentRest > maxConsecutiveRest) maxConsecutiveRest = currentRest
-        } else {
-          currentRest = 0
+          weekHours += hours
+          weekPresence += presenceHours
         }
-      }
-      if (maxConsecutiveRest < MIN_CONSECUTIVE_REST_DAYS) {
-        violations.push({
-          employeeId: empId,
-          employeeName: empName,
-          type: 'insufficient_consecutive_rest',
-          message: `${empName} n'a pas ${MIN_CONSECUTIVE_REST_DAYS} jours de repos consécutifs (semaine du ${weekDays[0].date})`,
-          dates: weekDays.map((d) => d.date),
+
+        employeeWeeks.push({
+          employeeId: emp.id,
+          employeeName: emp.name,
+          weekKey,
+          days,
+          totalHours: weekHours,
+          totalPresenceHours: weekPresence,
+          isWeekendWorker,
         })
       }
+
+      allWeeks.push({
+        weekKey,
+        weekendWorkerIds: [ww1.id, ww2.id],
+        employees: employeeWeeks,
+      })
     }
   }
 
-  return violations
+  const summary = buildSummary(allWeeks, employees, totalWeeks)
+
+  return { weeks: allWeeks, violations: [], summary, cycleLength: totalWeeks }
 }
 
 // ── Summary ─────────────────────────────────────────────
@@ -446,8 +264,6 @@ function buildSummary(
   weeks: WeekSchedule[],
   employees: Employee[],
   totalWeeks: number,
-  matinCount: Map<string, number>,
-  apremCount: Map<string, number>,
 ): EmployeeSummary[] {
   return employees.map((emp) => {
     let totalWeekends = 0
@@ -455,6 +271,9 @@ function buildSummary(
     let totalPresenceHours = 0
     let totalWorkDays = 0
     let totalRestDays = 0
+    let matinCount = 0
+    let soirCount = 0
+    let journeeCount = 0
 
     for (const week of weeks) {
       const ew = week.employees.find((e) => e.employeeId === emp.id)
@@ -465,6 +284,9 @@ function buildSummary(
       for (const day of ew.days) {
         if (day.status === 'rest') totalRestDays++
         else totalWorkDays++
+        if (day.shiftCode === 'M') matinCount++
+        if (day.shiftCode === 'S') soirCount++
+        if (day.shiftCode === 'J') journeeCount++
       }
     }
 
@@ -478,8 +300,9 @@ function buildSummary(
       totalRestDays,
       avgHoursPerWeek: totalWeeks > 0 ? Math.round((totalHours / totalWeeks) * 10) / 10 : 0,
       avgPresencePerWeek: totalWeeks > 0 ? Math.round((totalPresenceHours / totalWeeks) * 10) / 10 : 0,
-      matinCount: matinCount.get(emp.id) ?? 0,
-      apremCount: apremCount.get(emp.id) ?? 0,
+      matinCount,
+      soirCount,
+      journeeCount,
     }
   })
 }

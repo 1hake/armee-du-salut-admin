@@ -1,15 +1,13 @@
 'use server'
 
 import { db } from './db'
-import { employees, scheduleEntries, schedulerConfig, scheduleOverrides } from './schema'
+import { employees, scheduleEntries, scheduleOverrides } from './schema'
 import { eq, and, gte, lte, desc } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import {
   generateSchedule,
-  DEFAULT_CONFIG,
   type GeneratedSchedule,
   type Employee as EngineEmployee,
-  type SchedulerConfig,
 } from '@/lib/schedulerEngine'
 
 // ── Employees ──────────────────────────────────────────
@@ -30,30 +28,6 @@ export async function deleteEmployee(id: string) {
   revalidatePath('/equipe')
 }
 
-// ── Scheduler Config ───────────────────────────────────
-
-export async function getSchedulerConfig(): Promise<SchedulerConfig> {
-  const row = db.select().from(schedulerConfig).where(eq(schedulerConfig.id, 'default')).get()
-  if (!row) return DEFAULT_CONFIG
-  try {
-    return { ...DEFAULT_CONFIG, ...JSON.parse(row.config) }
-  } catch {
-    return DEFAULT_CONFIG
-  }
-}
-
-export async function saveSchedulerConfig(config: SchedulerConfig): Promise<void> {
-  const existing = db.select().from(schedulerConfig).where(eq(schedulerConfig.id, 'default')).get()
-  if (existing) {
-    await db.update(schedulerConfig)
-      .set({ config: JSON.stringify(config) })
-      .where(eq(schedulerConfig.id, 'default'))
-  } else {
-    await db.insert(schedulerConfig).values({ id: 'default', config: JSON.stringify(config) })
-  }
-  revalidatePath('/equipe')
-}
-
 // ── Schedule entries ───────────────────────────────────
 
 export async function getScheduleEntries(startDate: string, endDate: string) {
@@ -67,19 +41,17 @@ export async function getScheduleEntries(startDate: string, endDate: string) {
 
 export async function generateAndSaveSchedule(
   startDate: string,
-  weeks?: number,
+  cycles?: number,
 ): Promise<GeneratedSchedule> {
   const emps = db.select().from(employees).orderBy(employees.position).all()
-  if (emps.length < 2) throw new Error('Au moins 2 salariés requis')
+  if (emps.length !== 5) throw new Error('Exactement 5 salariés requis')
 
-  const config = await getSchedulerConfig()
   const engineEmployees: EngineEmployee[] = emps.map((e) => ({ id: e.id, name: e.name }))
 
   const schedule = generateSchedule({
     employees: engineEmployees,
     startDate,
-    weeks,
-    config,
+    cycles,
   })
 
   // Compute date range to clear
