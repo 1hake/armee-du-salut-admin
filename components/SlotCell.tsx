@@ -12,13 +12,14 @@ interface Props {
   isToday: boolean
   isAfternoon: boolean
   isLastDayAfternoon: boolean
+  isMorning?: boolean
   customColors?: Record<string, { color: string; bg: string }>
   onClick: () => void
   onDeleteBooking: (id: string) => void
   onMoveBooking?: (bookingId: string, roomId: string, dayIndex: number, slot: number) => void
 }
 
-export function SlotCell({ bookings, roomId, dayIndex, slot, isToday, isAfternoon, isLastDayAfternoon, customColors, onClick, onDeleteBooking, onMoveBooking }: Props) {
+export function SlotCell({ bookings, roomId, dayIndex, slot, isToday, isAfternoon, isLastDayAfternoon, isMorning, customColors, onClick, onDeleteBooking, onMoveBooking }: Props) {
   const [dragOver, setDragOver] = useState(false)
 
   const bgClass = isToday
@@ -32,6 +33,7 @@ export function SlotCell({ bookings, roomId, dayIndex, slot, isToday, isAfternoo
       className={`border-b border-border ${isLastDayAfternoon ? 'border-r' : ''} ${bgClass} min-h-[40px] flex flex-col items-stretch justify-center p-0.5 gap-0.5 cursor-pointer hover:bg-accent/8 transition-colors ${
         dragOver ? 'bg-accent/15 ring-2 ring-accent/30 ring-inset' : ''
       }`}
+      style={isMorning ? { borderRight: '1px dotted rgba(55, 53, 47, 0.25)' } : undefined}
       onClick={onClick}
       onDragOver={(e) => {
         e.preventDefault()

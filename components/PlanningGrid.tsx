@@ -105,7 +105,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
     <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-lg bg-surface border border-border">
       <div
         className="grid min-w-[900px]"
-        style={{ gridTemplateColumns: '50px minmax(160px, auto) repeat(7, 1fr 2px 1fr)' }}
+        style={{ gridTemplateColumns: '50px minmax(160px, auto) repeat(14, 1fr)' }}
       >
         {/* Header row 1: day names */}
         <div className="col-span-2 border-b border-r border-border" />
@@ -115,7 +115,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
             className={`text-center text-[13px] font-medium py-2.5 border-b border-border ${
               i < 6 ? 'border-r' : ''
             } ${i === todayDayIndex ? 'bg-accent/5' : ''}`}
-            style={{ gridColumn: `span 3` }}
+            style={{ gridColumn: `span 2` }}
           >
             {fmtDay(day)}
           </div>
@@ -129,11 +129,10 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
               className={`text-center text-[10px] uppercase tracking-wider py-1.5 border-b border-border text-muted ${
                 i === todayDayIndex ? 'bg-accent/5' : 'bg-morning'
               }`}
+              style={{ borderRight: '1px dotted rgba(55, 53, 47, 0.25)' }}
             >
               Matin
             </div>
-            {/* Separator column header */}
-            <div className="border-b border-border" style={{ backgroundColor: 'rgba(55, 53, 47, 0.16)' }} />
             <div
               className={`text-center text-[10px] uppercase tracking-wider py-1.5 border-b border-border text-muted ${
                 i < 6 ? 'border-r' : ''
@@ -182,7 +181,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                   </button>
                 </div>
 
-                {/* Slot cells: matin + separator + aprem for each day */}
+                {/* Slot cells: matin + aprem for each day */}
                 {days.map((_, dayIndex) => {
                   const morningBookings = bookingMap.get(`${room.id}-${dayIndex}-0`) ?? []
                   const afternoonBookings = bookingMap.get(`${room.id}-${dayIndex}-1`) ?? []
@@ -197,13 +196,12 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                         isToday={dayIndex === todayDayIndex}
                         isAfternoon={false}
                         isLastDayAfternoon={false}
+                        isMorning={true}
                         customColors={customColors}
                         onClick={() => onSlotClick(room.id, dayIndex, 0)}
                         onDeleteBooking={onDeleteBooking}
                         onMoveBooking={onMoveBooking}
                       />
-                      {/* Morning/Afternoon separator */}
-                      <div className="border-b border-border" style={{ backgroundColor: 'rgba(55, 53, 47, 0.16)' }} />
                       <SlotCell
                         bookings={afternoonBookings}
                         roomId={room.id}
