@@ -12,10 +12,10 @@ export function ScheduleSummary({ summary, weeks }: Props) {
   return (
     <div className="space-y-4">
       {/* Summary table */}
-      <div className="rounded-xl bg-surface border border-border/60 shadow-sm overflow-x-auto -mx-2 sm:mx-0">
+      <div className="rounded-lg bg-surface border border-border overflow-x-auto -mx-2 sm:mx-0">
         <table className="w-full text-[13px] min-w-[600px]">
           <thead>
-            <tr className="border-b border-border/60 bg-bg/30">
+            <tr className="border-b border-border bg-surface-hover">
               <th className="text-left px-3.5 py-2.5 text-[12px] font-medium text-muted">Salarie</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Weekends</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Jours travailles</th>
@@ -32,7 +32,7 @@ export function ScheduleSummary({ summary, weeks }: Props) {
               const avgWork = s.avgHoursPerWeek.toFixed(1)
               const hoursOk = Math.abs(s.avgHoursPerWeek - HOURS_PER_WEEK) <= 1
               return (
-                <tr key={s.employeeId} className="border-b border-border/40 last:border-0 hover:bg-bg/30 transition-colors">
+                <tr key={s.employeeId} className="border-b border-border last:border-0 hover:bg-surface-hover transition-colors">
                   <td className="px-3.5 py-2.5 font-medium">{s.employeeName}</td>
                   <td className="px-3.5 py-2.5 text-center">{s.totalWeekends}</td>
                   <td className="px-3.5 py-2.5 text-center">{s.totalWorkDays}</td>

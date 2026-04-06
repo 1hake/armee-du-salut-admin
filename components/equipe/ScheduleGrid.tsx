@@ -10,10 +10,10 @@ interface Props {
 }
 
 const SHIFT_COLORS: Record<string, { bg: string; text: string; dot: string }> = {
-  M: { bg: 'bg-blue-50',    text: 'text-blue-700',    dot: 'bg-blue-400' },
-  S: { bg: 'bg-amber-50',   text: 'text-amber-700',   dot: 'bg-amber-400' },
-  J: { bg: 'bg-emerald-50', text: 'text-emerald-700', dot: 'bg-emerald-400' },
-  W: { bg: 'bg-violet-50',  text: 'text-violet-700',  dot: 'bg-violet-400' },
+  M: { bg: 'bg-blue-50',    text: 'text-blue-600',    dot: 'bg-blue-400' },
+  S: { bg: 'bg-orange-50',  text: 'text-orange-600',  dot: 'bg-orange-400' },
+  J: { bg: 'bg-emerald-50', text: 'text-emerald-600', dot: 'bg-emerald-400' },
+  W: { bg: 'bg-purple-50',  text: 'text-purple-600',  dot: 'bg-purple-400' },
 }
 
 export function ScheduleGrid({ schedule }: Props) {
@@ -57,9 +57,9 @@ export function ScheduleGrid({ schedule }: Props) {
         <button
           onClick={() => setCurrentWeekIdx((i) => Math.max(0, i - 1))}
           disabled={currentWeekIdx === 0}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface transition-colors disabled:opacity-30 active:scale-95"
+          className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-surface-hover transition-colors disabled:opacity-20"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8.5 3.5L5 7l3.5 3.5"/></svg>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M8.5 3.5L5 7l3.5 3.5"/></svg>
         </button>
         <span className="text-[13px] font-medium">
           Cycle {cycleNum} · Semaine {weekInCycle}/{CYCLE_WEEKS} — {formatWeekLabel(dates)}
@@ -67,42 +67,36 @@ export function ScheduleGrid({ schedule }: Props) {
         <button
           onClick={() => setCurrentWeekIdx((i) => Math.min(schedule.weeks.length - 1, i + 1))}
           disabled={currentWeekIdx === schedule.weeks.length - 1}
-          className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface transition-colors disabled:opacity-30 active:scale-95"
+          className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-surface-hover transition-colors disabled:opacity-20"
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5.5 3.5L9 7l-3.5 3.5"/></svg>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M5.5 3.5L9 7l-3.5 3.5"/></svg>
         </button>
       </div>
 
       {/* Grid */}
-      <div className="rounded-xl bg-surface border border-border/60 shadow-sm overflow-x-auto -mx-2 sm:mx-0">
-        <div
-          className="grid min-w-[700px]"
-          style={{ gridTemplateColumns: '110px repeat(7, 1fr)' }}
-        >
-          {/* Header: day names + dates */}
-          <div className="border-b border-r border-border/60 bg-bg/30 px-2 py-2.5 text-[12px] font-medium text-muted" />
-          {dates.map((d, i) => {
-            const isWeekend = i >= 5
-            return (
-              <div
-                key={i}
-                className={`border-b border-border/60 ${i < 6 ? 'border-r' : ''} px-2 py-2.5 text-center text-[12px] font-medium ${
-                  isWeekend ? 'bg-violet-50/30' : 'bg-bg/30'
-                }`}
-              >
-                <div>{DAYS_FR[i]}</div>
-                <div className="text-muted">{d.getDate()}/{d.getMonth() + 1}</div>
-              </div>
-            )
-          })}
+      <div className="border border-border rounded-lg overflow-x-auto">
+        <div className="grid min-w-[640px]" style={{ gridTemplateColumns: '100px repeat(7, 1fr)' }}>
+          {/* Header */}
+          <div className="border-b border-r border-border bg-surface-hover px-2 py-2 text-[12px] text-muted" />
+          {dates.map((d, i) => (
+            <div
+              key={i}
+              className={`border-b border-border ${i < 6 ? 'border-r' : ''} px-2 py-2 text-center text-[12px] ${
+                i >= 5 ? 'bg-purple-50/30' : 'bg-surface-hover'
+              }`}
+            >
+              <div className="font-medium text-ink">{DAYS_FR[i]}</div>
+              <div className="text-muted">{d.getDate()}/{d.getMonth() + 1}</div>
+            </div>
+          ))}
 
           {/* Employee rows */}
           {week.employees.map((emp) => (
             <div key={emp.employeeId} className="contents">
-              <div className="border-b border-r border-border/60 px-2.5 py-2 text-[12px] font-medium flex items-center">
+              <div className="border-b border-r border-border px-2.5 py-2 text-[12px] font-medium flex items-center">
                 <span className="truncate">{emp.employeeName}</span>
                 {emp.isWeekendWorker && (
-                  <span className="ml-1.5 text-[9px] bg-violet-50 text-violet-600 px-1.5 py-0.5 rounded-full font-medium">WE</span>
+                  <span className="ml-1.5 text-[9px] bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-medium">WE</span>
                 )}
               </div>
               {emp.days.map((day, i) => (
@@ -111,19 +105,16 @@ export function ScheduleGrid({ schedule }: Props) {
             </div>
           ))}
 
-          {/* Week total row */}
+          {/* Total row */}
           <div className="contents">
-            <div className="border-r border-border/60 px-2.5 py-2.5 text-[12px] font-semibold bg-bg/30">
-              Total jour
+            <div className="border-r border-border px-2.5 py-2 text-[12px] font-semibold text-muted bg-surface-hover">
+              Total
             </div>
             {dates.map((_, i) => {
               const totalForDay = week.employees.reduce((sum, emp) => sum + emp.days[i].hours, 0)
               const workersForDay = week.employees.filter((emp) => emp.days[i].status !== 'rest').length
               return (
-                <div
-                  key={i}
-                  className={`border-border/60 ${i < 6 ? 'border-r' : ''} px-1 py-2 text-center bg-bg/30`}
-                >
+                <div key={i} className={`border-border ${i < 6 ? 'border-r' : ''} px-1 py-2 text-center bg-surface-hover`}>
                   <div className="text-[11px] font-semibold">{totalForDay}h</div>
                   <div className="text-[9px] text-muted">{workersForDay} pers.</div>
                 </div>
@@ -139,8 +130,8 @@ export function ScheduleGrid({ schedule }: Props) {
 function ShiftCell({ day, isLast }: { day: EmployeeDay; isLast: boolean }) {
   if (day.status === 'rest') {
     return (
-      <div className={`border-b border-border/60 ${!isLast ? 'border-r' : ''} px-1 py-1.5 text-center bg-gray-50/30`}>
-        <div className="text-[11px] text-gray-300">—</div>
+      <div className={`border-b border-border ${!isLast ? 'border-r' : ''} px-1 py-1.5 text-center`}>
+        <div className="text-[11px] text-muted/30">&mdash;</div>
       </div>
     )
   }
@@ -150,7 +141,7 @@ function ShiftCell({ day, isLast }: { day: EmployeeDay; isLast: boolean }) {
   const info = SHIFT_INFO[code]
 
   return (
-    <div className={`border-b border-border/60 ${!isLast ? 'border-r' : ''} px-1 py-1.5 text-center ${colors.bg}`}>
+    <div className={`border-b border-border ${!isLast ? 'border-r' : ''} px-1 py-1.5 text-center ${colors.bg}`}>
       <div className="space-y-0.5">
         <div className={`text-[12px] font-semibold ${colors.text} flex items-center justify-center gap-1`}>
           <span className={`w-1.5 h-1.5 rounded-full ${colors.dot} inline-block`} />

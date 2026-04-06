@@ -69,7 +69,7 @@ export function ColorPickerModal({ organisation, currentColor, onConfirm, onRese
 
           {/* Custom color inputs */}
           <label className="block text-xs font-medium text-muted mb-2 uppercase tracking-wider">Personnalisée</label>
-          <div className="flex gap-3 rounded-lg border border-border/60 bg-bg/30 p-3">
+          <div className="flex gap-3 rounded-lg border border-border bg-surface-hover p-3">
             <div className="flex-1">
               <label className="block text-[11px] text-muted mb-1">Texte</label>
               <div className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export function ColorPickerModal({ organisation, currentColor, onConfirm, onRese
                   type="color"
                   value={selected.color}
                   onChange={(e) => setSelected((s) => ({ ...s, color: e.target.value }))}
-                  className="w-8 h-8 rounded-md cursor-pointer border border-border/60 bg-transparent"
+                  className="w-8 h-8 rounded-md cursor-pointer border border-border bg-transparent"
                 />
                 <span className="text-[11px] text-muted font-mono">{selected.color}</span>
               </div>
@@ -90,7 +90,7 @@ export function ColorPickerModal({ organisation, currentColor, onConfirm, onRese
                   type="color"
                   value={selected.bg}
                   onChange={(e) => setSelected((s) => ({ ...s, bg: e.target.value }))}
-                  className="w-8 h-8 rounded-md cursor-pointer border border-border/60 bg-transparent"
+                  className="w-8 h-8 rounded-md cursor-pointer border border-border bg-transparent"
                 />
                 <span className="text-[11px] text-muted font-mono">{selected.bg}</span>
               </div>
@@ -98,7 +98,7 @@ export function ColorPickerModal({ organisation, currentColor, onConfirm, onRese
           </div>
 
           {/* Actions */}
-          <div className="flex items-center justify-between mt-5 pt-4 border-t border-border/60">
+          <div className="flex items-center justify-between mt-5 pt-4 border-t border-border">
             <button
               onClick={onReset}
               className="text-sm text-muted hover:text-ink transition-colors underline underline-offset-2 decoration-border hover:decoration-ink"

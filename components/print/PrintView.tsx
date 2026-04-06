@@ -24,10 +24,13 @@ export function PrintView({ rooms, bookings, weekKey, customColors }: Props) {
   const days = getWeekDays(monday)
   const label = fmtWeekLabel(days)
 
-  // Build booking map
-  const bookingMap = new Map<string, Booking>()
+  // Build booking map (multiple per slot)
+  const bookingMap = new Map<string, Booking[]>()
   for (const b of bookings) {
-    bookingMap.set(`${b.roomId}-${b.dayIndex}-${b.slot}`, b)
+    const key = `${b.roomId}-${b.dayIndex}-${b.slot}`
+    const list = bookingMap.get(key) ?? []
+    list.push(b)
+    bookingMap.set(key, list)
   }
 
   // Group rooms by floor
@@ -233,8 +236,8 @@ export function PrintView({ rooms, bookings, weekKey, customColors }: Props) {
                   {days.map((_, dayIndex) => (
                     <Fragment key={dayIndex}>
                       {[0, 1].map((slot) => {
-                        const booking = bookingMap.get(`${room.id}-${dayIndex}-${slot}`)
-                        if (!booking) {
+                        const slotBookings = bookingMap.get(`${room.id}-${dayIndex}-${slot}`) ?? []
+                        if (slotBookings.length === 0) {
                           return (
                             <td
                               key={slot}
@@ -250,7 +253,6 @@ export function PrintView({ rooms, bookings, weekKey, customColors }: Props) {
                             </td>
                           )
                         }
-                        const orgColor = getOrgColor(booking.organisation, customColors)
                         return (
                           <td
                             key={slot}
@@ -261,23 +263,28 @@ export function PrintView({ rooms, bookings, weekKey, customColors }: Props) {
                               lineHeight: 1.2,
                             }}
                           >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
-                              <span
-                                style={{
-                                  display: 'inline-block',
-                                  width: '6px',
-                                  height: '6px',
-                                  borderRadius: '50%',
-                                  backgroundColor: orgColor.color,
-                                  flexShrink: 0,
-                                  printColorAdjust: 'exact',
-                                  WebkitPrintColorAdjust: 'exact',
-                                }}
-                              />
-                              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60px' }}>
-                                {booking.organisation}
-                              </span>
-                            </div>
+                            {slotBookings.map((booking) => {
+                              const orgColor = getOrgColor(booking.organisation, customColors)
+                              return (
+                                <div key={booking.id} style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                  <span
+                                    style={{
+                                      display: 'inline-block',
+                                      width: '6px',
+                                      height: '6px',
+                                      borderRadius: '50%',
+                                      backgroundColor: orgColor.color,
+                                      flexShrink: 0,
+                                      printColorAdjust: 'exact',
+                                      WebkitPrintColorAdjust: 'exact',
+                                    }}
+                                  />
+                                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '60px' }}>
+                                    {booking.organisation}
+                                  </span>
+                                </div>
+                              )
+                            })}
                           </td>
                         )
                       })}

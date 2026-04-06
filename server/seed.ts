@@ -1,5 +1,6 @@
 import { db } from './db'
-import { rooms, bookings, employees } from './schema'
+import { rooms, bookings, employees, users } from './schema'
+import { randomBytes, scryptSync } from 'crypto'
 
 const SEED_ROOMS = [
   { floor: 'RDC', name: 'Cour extérieure', capacity: 50, position: 0 },
@@ -33,6 +34,9 @@ const SEED_BOOKINGS: { roomName: string; dayIndex: number; slot: number; organis
 ]
 
 export async function seed() {
+  // Always ensure admin exists (for existing DBs)
+  seedAdmin()
+
   const existingRooms = db.select().from(rooms).all()
   if (existingRooms.length > 0) return
 
@@ -65,4 +69,24 @@ export async function seed() {
   for (const e of SEED_EMPLOYEES) {
     db.insert(employees).values(e).run()
   }
+
+  // Seed default admin user
+  seedAdmin()
+}
+
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString('hex')
+  const hash = scryptSync(password, salt, 64).toString('hex')
+  return `${salt}:${hash}`
+}
+
+export function seedAdmin() {
+  const existing = db.select().from(users).all()
+  if (existing.length > 0) return
+  db.insert(users).values({
+    username: 'admin',
+    passwordHash: hashPassword('admin'),
+    role: 'admin',
+    employeeId: null,
+  }).run()
 }

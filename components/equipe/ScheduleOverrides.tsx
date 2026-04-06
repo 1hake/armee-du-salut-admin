@@ -26,7 +26,7 @@ export function ScheduleOverrides({ overrides, employees, onAdd, onDelete }: Pro
   }
 
   return (
-    <div className="rounded-xl bg-surface border border-border/60 shadow-sm p-4 space-y-4">
+    <div className="rounded-lg bg-surface border border-border p-4 space-y-4">
       <h3 className="text-[14px] font-semibold">Changements ponctuels</h3>
 
       <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 items-end">

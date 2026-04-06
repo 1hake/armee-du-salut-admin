@@ -96,7 +96,7 @@ export function AddRoomModal({ onConfirm, onClose }: Props) {
           </div>
 
           {/* Actions */}
-          <div className="flex justify-end gap-2 pt-3 border-t border-border/60">
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
             <button
               onClick={onClose}
               className="px-4 py-2 text-sm border border-border rounded-lg hover:bg-bg transition-colors"

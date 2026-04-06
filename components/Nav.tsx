@@ -2,51 +2,119 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { logout } from '@/server/auth'
 
-const TABS = [
+interface Tab { href: string; label: string; icon?: React.ReactNode }
+
+const ADMIN_TABS: Tab[] = [
   { href: '/', label: 'Salles' },
-  { href: '/equipe', label: 'Planning equipe' },
+  { href: '/equipe/planning', label: "Planning d'equipe" },
+  { href: '/equipe', label: 'Creer planning' },
   { href: '/partenaires', label: 'Partenaires' },
   { href: '/stats', label: 'Statistiques' },
+  { href: '/admin/users', label: 'Comptes' },
 ]
 
-export function Nav() {
-  const pathname = usePathname()
+const EMPLOYEE_TABS: Tab[] = [
+  { href: '/profil', label: 'Mon planning', icon: <IconCalendar /> },
+]
 
+interface Props { role: string; username: string }
+
+export function Nav({ role, username }: Props) {
+  const pathname = usePathname()
+  const isAdmin = role === 'admin'
+  const tabs = isAdmin ? ADMIN_TABS : EMPLOYEE_TABS
+
+  function isActive(href: string) {
+    if (href === '/') return pathname === '/'
+    if (href === '/equipe') return pathname === '/equipe'
+    return pathname.startsWith(href)
+  }
+
+  // Employee gets a simple top header + bottom tab bar on mobile
+  if (!isAdmin) {
+    return (
+      <>
+        {/* Top header */}
+        <header className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md safe-top">
+          <div className="max-w-lg mx-auto px-4 h-12 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-6 h-6 rounded-md bg-red flex items-center justify-center">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                  <rect x="6.5" y="3" width="3" height="10" rx="0.5" fill="white"/>
+                  <rect x="3" y="6.5" width="10" height="3" rx="0.5" fill="white"/>
+                </svg>
+              </div>
+              <span className="text-[14px] font-semibold text-ink">Mon planning</span>
+            </div>
+            <button
+              onClick={() => logout()}
+              className="text-[13px] text-muted hover:text-ink transition-colors px-2 py-1"
+            >
+              Deconnexion
+            </button>
+          </div>
+        </header>
+      </>
+    )
+  }
+
+  // Admin: Notion-style top nav
   return (
-    <nav className="sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-border/60">
-      <div className="max-w-[1400px] mx-auto px-3 sm:px-6 h-12 flex items-center gap-4">
+    <nav className="sticky top-0 z-40 bg-bg/80 backdrop-blur-md border-b border-border">
+      <div className="max-w-[1200px] mx-auto px-4 h-11 flex items-center gap-1">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2 shrink-0">
-          <div className="w-7 h-7 rounded-lg bg-red-600 flex items-center justify-center">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 2L4 6v5.5c0 .8.7 1.5 1.5 1.5h5c.8 0 1.5-.7 1.5-1.5V6L8 2z" fill="white" opacity="0.9"/>
-              <path d="M7.25 5.5v2.25H5.5v1.5h1.75V11.5h1.5V9.25H10.5v-1.5H8.75V5.5h-1.5z" fill="#DC2626"/>
+        <Link href="/" className="flex items-center gap-2 shrink-0 mr-3">
+          <div className="w-5 h-5 rounded bg-red flex items-center justify-center">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
+              <rect x="6.5" y="3" width="3" height="10" rx="0.5" fill="white"/>
+              <rect x="3" y="6.5" width="10" height="3" rx="0.5" fill="white"/>
             </svg>
           </div>
-          <span className="text-[13px] font-semibold tracking-tight hidden sm:inline">Armée du Salut</span>
+          <span className="text-[13px] font-semibold text-ink hidden sm:inline">Armee du Salut</span>
         </Link>
 
-        {/* Segmented control */}
-        <div className="inline-flex bg-bg rounded-lg p-0.5 gap-0.5">
-          {TABS.map((tab) => {
-            const isActive = tab.href === '/' ? pathname === '/' : pathname.startsWith(tab.href)
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                className={`px-4 py-1.5 text-[13px] font-medium rounded-md transition-all ${
-                  isActive
-                    ? 'bg-surface text-ink shadow-sm'
-                    : 'text-muted hover:text-ink'
-                }`}
-              >
-                {tab.label}
-              </Link>
-            )
-          })}
+        {/* Tab links */}
+        <div className="flex items-center gap-0.5 overflow-x-auto">
+          {tabs.map((tab) => (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`px-2.5 py-1 text-[13px] rounded-md transition-colors whitespace-nowrap ${
+                isActive(tab.href)
+                  ? 'bg-border text-ink font-medium'
+                  : 'text-muted hover:bg-surface-hover hover:text-ink'
+              }`}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </div>
+
+        <div className="flex-1" />
+
+        {/* User */}
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[12px] text-muted hidden sm:inline">{username}</span>
+          <button
+            onClick={() => logout()}
+            className="text-[12px] text-muted hover:text-ink transition-colors px-1.5 py-0.5 rounded hover:bg-surface-hover"
+          >
+            Deconnexion
+          </button>
         </div>
       </div>
     </nav>
+  )
+}
+
+function IconCalendar() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="14" height="13" rx="2" />
+      <path d="M3 8h14" />
+      <path d="M7 2v3M13 2v3" />
+    </svg>
   )
 }

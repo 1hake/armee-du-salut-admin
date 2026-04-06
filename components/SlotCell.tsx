@@ -5,7 +5,7 @@ import type { Booking } from '@/server/schema'
 import { BookingChip } from './BookingChip'
 
 interface Props {
-  booking: Booking | null
+  bookings: Booking[]
   roomId: string
   dayIndex: number
   slot: number
@@ -14,11 +14,11 @@ interface Props {
   isLastDayAfternoon: boolean
   customColors?: Record<string, { color: string; bg: string }>
   onClick: () => void
-  onDelete?: () => void
+  onDeleteBooking: (id: string) => void
   onMoveBooking?: (bookingId: string, roomId: string, dayIndex: number, slot: number) => void
 }
 
-export function SlotCell({ booking, roomId, dayIndex, slot, isToday, isAfternoon, isLastDayAfternoon, customColors, onClick, onDelete, onMoveBooking }: Props) {
+export function SlotCell({ bookings, roomId, dayIndex, slot, isToday, isAfternoon, isLastDayAfternoon, customColors, onClick, onDeleteBooking, onMoveBooking }: Props) {
   const [dragOver, setDragOver] = useState(false)
 
   const bgClass = isToday
@@ -29,27 +29,23 @@ export function SlotCell({ booking, roomId, dayIndex, slot, isToday, isAfternoon
 
   return (
     <div
-      className={`border-b border-border/60 ${isLastDayAfternoon ? 'border-r' : ''} ${bgClass} min-h-[40px] flex items-center justify-center p-0.5 ${
-        !booking ? 'cursor-pointer hover:bg-accent/8 transition-colors' : ''
-      } ${dragOver && !booking ? 'bg-accent/15 ring-2 ring-accent/30 ring-inset' : ''}`}
-      onClick={!booking ? onClick : undefined}
+      className={`border-b border-border ${isLastDayAfternoon ? 'border-r' : ''} ${bgClass} min-h-[40px] flex flex-col items-stretch justify-center p-0.5 gap-0.5 cursor-pointer hover:bg-accent/8 transition-colors ${
+        dragOver ? 'bg-accent/15 ring-2 ring-accent/30 ring-inset' : ''
+      }`}
+      onClick={onClick}
       onDragOver={(e) => {
-        if (!booking) {
-          e.preventDefault()
-          e.dataTransfer.dropEffect = 'move'
-        }
+        e.preventDefault()
+        e.dataTransfer.dropEffect = 'move'
       }}
       onDragEnter={(e) => {
-        if (!booking) {
-          e.preventDefault()
-          setDragOver(true)
-        }
+        e.preventDefault()
+        setDragOver(true)
       }}
       onDragLeave={() => setDragOver(false)}
       onDrop={(e) => {
         e.preventDefault()
         setDragOver(false)
-        if (!booking && onMoveBooking) {
+        if (onMoveBooking) {
           const bookingId = e.dataTransfer.getData('text/plain')
           if (bookingId) {
             onMoveBooking(bookingId, roomId, dayIndex, slot)
@@ -57,9 +53,15 @@ export function SlotCell({ booking, roomId, dayIndex, slot, isToday, isAfternoon
         }
       }}
     >
-      {booking && onDelete && (
-        <BookingChip bookingId={booking.id} organisation={booking.organisation} customColors={customColors} onDelete={onDelete} />
-      )}
+      {bookings.map((booking) => (
+        <BookingChip
+          key={booking.id}
+          bookingId={booking.id}
+          organisation={booking.organisation}
+          customColors={customColors}
+          onDelete={() => onDeleteBooking(booking.id)}
+        />
+      ))}
     </div>
   )
 }

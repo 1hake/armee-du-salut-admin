@@ -7,7 +7,8 @@ import {
   addEmployee,
   renameEmployee,
   deleteEmployee,
-  generateAndSaveSchedule,
+  generateSchedulePreview,
+  saveSchedule,
   getScheduleOverrides,
   addScheduleOverride,
   deleteScheduleOverride,
@@ -92,25 +93,33 @@ export function EquipeClient({ initialEmployees }: Props) {
 
   const generateMutation = useMutation({
     mutationFn: (params: { startDate: string; cycles?: number }) =>
-      generateAndSaveSchedule(params.startDate, params.cycles),
+      generateSchedulePreview(params.startDate, params.cycles),
     onSuccess: (result) => {
       setSchedule(result)
-      toast.success(`Planning genere : ${result.weeks.length} semaines`)
+      toast.success(`Planning genere : ${result.weeks.length} semaines (non enregistre)`)
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : 'Erreur lors de la generation')
     },
   })
 
-  return (
-    <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-5 sm:py-8">
-      <h1 className="text-2xl sm:text-[28px] font-semibold tracking-tight mb-5 sm:mb-8">
-        Planning equipe
-      </h1>
+  const saveMutation = useMutation({
+    mutationFn: () => saveSchedule(schedule!),
+    onSuccess: () => {
+      toast.success('Planning enregistre')
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement')
+    },
+  })
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 sm:gap-8">
+  return (
+    <div className="max-w-[1200px] mx-auto px-4 py-6">
+      <h1 className="text-[22px] font-bold mb-6">Creer planning</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         {/* Left sidebar */}
-        <div className="space-y-5">
+        <div className="space-y-4">
           <EmployeeList
             employees={employees}
             onAdd={(name) => addEmployeeMutation.mutate(name)}
@@ -129,20 +138,29 @@ export function EquipeClient({ initialEmployees }: Props) {
         </div>
 
         {/* Main content */}
-        <div className="space-y-5">
+        <div className="space-y-4">
           {schedule && (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <ScheduleSummary
                   summary={schedule.summary}
                   weeks={schedule.weeks.length}
                 />
-                <button
-                  onClick={() => exportEquipeToExcel(schedule)}
-                  className="px-4 py-2 text-[13px] font-medium rounded-full border border-border hover:bg-surface transition-colors flex-shrink-0 h-fit active:scale-95"
-                >
-                  Export Excel
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => saveMutation.mutate()}
+                    disabled={saveMutation.isPending}
+                    className="h-8 px-3.5 text-[13px] font-medium rounded-md bg-accent text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+                  >
+                    {saveMutation.isPending ? 'Enregistrement...' : 'Enregistrer'}
+                  </button>
+                  <button
+                    onClick={() => exportEquipeToExcel(schedule)}
+                    className="h-8 px-3.5 text-[13px] font-medium rounded-md border border-border-strong hover:bg-surface-hover transition-colors"
+                  >
+                    Export Excel
+                  </button>
+                </div>
               </div>
               <ScheduleGrid schedule={schedule} />
             </>
@@ -158,7 +176,7 @@ export function EquipeClient({ initialEmployees }: Props) {
           />
 
           {!schedule && (
-            <div className="rounded-xl bg-surface border border-border/60 shadow-sm p-8 sm:p-16 text-center text-muted text-[15px]">
+            <div className="border border-border rounded-lg p-8 sm:p-16 text-center text-muted text-[14px]">
               Configurez les salaries et generez le planning
             </div>
           )}

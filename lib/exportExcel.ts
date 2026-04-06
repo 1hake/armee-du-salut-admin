@@ -13,10 +13,13 @@ export function exportPlanningToExcel(
   const days = getWeekDays(monday)
   const label = fmtWeekLabel(days)
 
-  // Build booking lookup
-  const bookingMap = new Map<string, Booking>()
+  // Build booking lookup (multiple per slot)
+  const bookingMap = new Map<string, Booking[]>()
   for (const b of bookings) {
-    bookingMap.set(`${b.roomId}-${b.dayIndex}-${b.slot}`, b)
+    const key = `${b.roomId}-${b.dayIndex}-${b.slot}`
+    const list = bookingMap.get(key) ?? []
+    list.push(b)
+    bookingMap.set(key, list)
   }
 
   // Sort rooms by floor
@@ -55,8 +58,8 @@ export function exportPlanningToExcel(
     const row: string[] = [floor, room.name]
     for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
       for (let slot = 0; slot < 2; slot++) {
-        const booking = bookingMap.get(`${room.id}-${dayIndex}-${slot}`)
-        row.push(booking ? booking.organisation : '')
+        const slotBookings = bookingMap.get(`${room.id}-${dayIndex}-${slot}`) ?? []
+        row.push(slotBookings.map((b) => b.organisation).join(', '))
       }
     }
     data.push(row)

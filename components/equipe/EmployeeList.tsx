@@ -42,7 +42,7 @@ export function EmployeeList({ employees, onAdd, onRename, onDelete }: Props) {
   }
 
   return (
-    <div className="rounded-xl bg-surface border border-border/60 shadow-sm p-4">
+    <div className="rounded-lg bg-surface border border-border p-4">
       <h2 className="text-[13px] font-semibold mb-3">Salaries ({employees.length}/5)</h2>
 
       <ul className="space-y-0.5 mb-3">

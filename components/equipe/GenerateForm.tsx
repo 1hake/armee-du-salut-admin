@@ -18,11 +18,11 @@ export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: P
   const needsExactly5 = employeeCount !== 5
 
   return (
-    <div className="rounded-xl bg-surface border border-border/60 shadow-sm p-4">
+    <div className="rounded-lg bg-surface border border-border p-4">
       <h2 className="text-[13px] font-semibold mb-3">Generer le planning</h2>
 
       {/* Shift info */}
-      <div className="rounded-lg bg-bg/50 border border-border/40 p-3 mb-4 space-y-1.5">
+      <div className="rounded-lg bg-bg/50 border border-border p-3 mb-4 space-y-1.5">
         <div className="text-[11px] font-medium text-muted uppercase tracking-wider mb-1">Horaires</div>
         {(['M', 'S', 'J', 'W'] as const).map((code) => {
           const info = SHIFT_INFO[code]
@@ -69,7 +69,7 @@ export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: P
         <button
           onClick={() => onGenerate(startDate, cycles)}
           disabled={needsExactly5 || loading}
-          className="w-full px-4 py-2.5 text-[13px] font-medium bg-accent text-white rounded-full hover:brightness-110 transition-all disabled:opacity-30 active:scale-[0.98]"
+          className="w-full px-4 py-2.5 text-[13px] font-medium bg-accent text-white rounded-md hover:brightness-110 transition-all disabled:opacity-30 active:scale-[0.98]"
         >
           {loading ? 'Generation...' : 'Generer le planning'}
         </button>

@@ -20,7 +20,7 @@ export function LegendBar({ organisations, customColors, onTagClick }: Props) {
             key={org}
             type="button"
             onClick={() => onTagClick?.(org)}
-            className="px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer hover:shadow-sm transition-all active:scale-95"
+            className="px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer transition-all active:scale-95"
             style={{ backgroundColor: bg, color }}
             title="Cliquer pour changer la couleur"
           >

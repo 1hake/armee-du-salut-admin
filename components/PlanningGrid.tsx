@@ -72,9 +72,13 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
   const todayKey = getWeekKey(new Date())
   const todayDayIndex = todayKey === weekKey ? ((new Date().getDay() + 6) % 7) : -1
 
-  const bookingMap = new Map<string, Booking>()
+  // Build booking map: key -> Booking[]
+  const bookingMap = new Map<string, Booking[]>()
   for (const b of bookings) {
-    bookingMap.set(`${b.roomId}-${b.dayIndex}-${b.slot}`, b)
+    const key = `${b.roomId}-${b.dayIndex}-${b.slot}`
+    const list = bookingMap.get(key) ?? []
+    list.push(b)
+    bookingMap.set(key, list)
   }
 
   // Group rooms by floor
@@ -98,37 +102,40 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
   }
 
   return (
-    <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-xl bg-surface shadow-sm border border-border/60">
+    <div className="overflow-x-auto -mx-2 sm:mx-0 rounded-lg bg-surface border border-border">
       <div
         className="grid min-w-[900px]"
-        style={{ gridTemplateColumns: '50px minmax(160px, auto) repeat(14, 1fr)' }}
+        style={{ gridTemplateColumns: '50px minmax(160px, auto) repeat(7, 1fr 2px 1fr)' }}
       >
         {/* Header row 1: day names */}
-        <div className="col-span-2 border-b border-r border-border/60" />
+        <div className="col-span-2 border-b border-r border-border" />
         {days.map((day, i) => (
           <div
             key={i}
-            className={`col-span-2 text-center text-[13px] font-medium py-2.5 border-b border-border/60 ${
+            className={`text-center text-[13px] font-medium py-2.5 border-b border-border ${
               i < 6 ? 'border-r' : ''
             } ${i === todayDayIndex ? 'bg-accent/5' : ''}`}
+            style={{ gridColumn: `span 3` }}
           >
             {fmtDay(day)}
           </div>
         ))}
 
         {/* Header row 2: matin/aprem */}
-        <div className="col-span-2 border-b border-r border-border/60" />
+        <div className="col-span-2 border-b border-r border-border" />
         {days.map((_, i) => (
           <div key={`slots-${i}`} className="contents">
             <div
-              className={`text-center text-[10px] uppercase tracking-wider py-1.5 border-b border-border/60 text-muted ${
+              className={`text-center text-[10px] uppercase tracking-wider py-1.5 border-b border-border text-muted ${
                 i === todayDayIndex ? 'bg-accent/5' : 'bg-morning'
               }`}
             >
               Matin
             </div>
+            {/* Separator column header */}
+            <div className="border-b border-border" style={{ backgroundColor: 'rgba(55, 53, 47, 0.16)' }} />
             <div
-              className={`text-center text-[10px] uppercase tracking-wider py-1.5 border-b border-border/60 text-muted ${
+              className={`text-center text-[10px] uppercase tracking-wider py-1.5 border-b border-border text-muted ${
                 i < 6 ? 'border-r' : ''
               } ${i === todayDayIndex ? 'bg-accent/5' : 'bg-afternoon'}`}
             >
@@ -145,7 +152,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                 {/* Floor label */}
                 {roomIdx === 0 && (
                   <div
-                    className="border-r border-b border-border/60 flex items-center justify-center bg-bg/40"
+                    className="border-r border-b border-border flex items-center justify-center bg-bg/40"
                     style={{
                       gridRow: `span ${floorRooms.length}`,
                       writingMode: 'vertical-rl',
@@ -158,7 +165,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                 )}
 
                 {/* Room name */}
-                <div className="group/room border-r border-b border-border/60 px-2 sm:px-2.5 py-1.5 flex items-center gap-1">
+                <div className="group/room border-r border-b border-border px-2 sm:px-2.5 py-1.5 flex items-center gap-1">
                   <div className="min-w-0">
                     <div className="text-[12px] sm:text-[13px] font-medium whitespace-nowrap">{room.name}</div>
                     <CapacityEditor
@@ -175,34 +182,44 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                   </button>
                 </div>
 
-                {/* 14 slot cells */}
-                {days.map((_, dayIndex) => (
-                  <div key={dayIndex} className="contents">
-                    {[0, 1].map((slot) => {
-                      const booking = bookingMap.get(`${room.id}-${dayIndex}-${slot}`)
-                      const isAfternoon = slot === 1
-                      const isLastDay = dayIndex === 6
-                      return (
-                        <SlotCell
-                          key={`${dayIndex}-${slot}`}
-                          booking={booking ?? null}
-                          roomId={room.id}
-                          dayIndex={dayIndex}
-                          slot={slot}
-                          isToday={dayIndex === todayDayIndex}
-                          isAfternoon={isAfternoon}
-                          isLastDayAfternoon={isAfternoon && !isLastDay}
-                          customColors={customColors}
-                          onClick={() => {
-                            if (!booking) onSlotClick(room.id, dayIndex, slot)
-                          }}
-                          onDelete={booking ? () => onDeleteBooking(booking.id) : undefined}
-                          onMoveBooking={onMoveBooking}
-                        />
-                      )
-                    })}
-                  </div>
-                ))}
+                {/* Slot cells: matin + separator + aprem for each day */}
+                {days.map((_, dayIndex) => {
+                  const morningBookings = bookingMap.get(`${room.id}-${dayIndex}-0`) ?? []
+                  const afternoonBookings = bookingMap.get(`${room.id}-${dayIndex}-1`) ?? []
+                  const isLastDay = dayIndex === 6
+                  return (
+                    <div key={dayIndex} className="contents">
+                      <SlotCell
+                        bookings={morningBookings}
+                        roomId={room.id}
+                        dayIndex={dayIndex}
+                        slot={0}
+                        isToday={dayIndex === todayDayIndex}
+                        isAfternoon={false}
+                        isLastDayAfternoon={false}
+                        customColors={customColors}
+                        onClick={() => onSlotClick(room.id, dayIndex, 0)}
+                        onDeleteBooking={onDeleteBooking}
+                        onMoveBooking={onMoveBooking}
+                      />
+                      {/* Morning/Afternoon separator */}
+                      <div className="border-b border-border" style={{ backgroundColor: 'rgba(55, 53, 47, 0.16)' }} />
+                      <SlotCell
+                        bookings={afternoonBookings}
+                        roomId={room.id}
+                        dayIndex={dayIndex}
+                        slot={1}
+                        isToday={dayIndex === todayDayIndex}
+                        isAfternoon={true}
+                        isLastDayAfternoon={!isLastDay}
+                        customColors={customColors}
+                        onClick={() => onSlotClick(room.id, dayIndex, 1)}
+                        onDeleteBooking={onDeleteBooking}
+                        onMoveBooking={onMoveBooking}
+                      />
+                    </div>
+                  )
+                })}
               </div>
             ))}
           </div>

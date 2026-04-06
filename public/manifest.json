@@ -1,0 +1,15 @@
+{
+  "name": "Armee du Salut",
+  "short_name": "Planning",
+  "description": "Planning et gestion - Armee du Salut",
+  "start_url": "/profil",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#EB5757",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.svg", "sizes": "192x192", "type": "image/svg+xml" },
+    { "src": "/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml" },
+    { "src": "/icon-512.svg", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

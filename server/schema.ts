@@ -16,9 +16,7 @@ export const bookings = sqliteTable('bookings', {
   dayIndex:     integer('day_index').notNull(),
   slot:         integer('slot').notNull(),
   organisation: text('organisation').notNull(),
-}, (t) => [
-  uniqueIndex('bookings_uniq').on(t.roomId, t.weekKey, t.dayIndex, t.slot),
-])
+})
 
 // ── Equipe ─────────────────────────────────────────────
 
@@ -35,6 +33,7 @@ export const scheduleEntries = sqliteTable('schedule_entries', {
   dayIndex:   integer('day_index').notNull(),   // 0=Lun … 6=Dim
   status:     text('status').notNull(),         // 'work' | 'rest' | 'weekend_work'
   hours:      integer('hours').notNull().default(0),
+  shiftCode:  text('shift_code'),               // M | S | J | W | R
 }, (t) => [
   uniqueIndex('schedule_uniq').on(t.employeeId, t.date),
 ])
@@ -67,6 +66,22 @@ export const scheduleOverrides = sqliteTable('schedule_overrides', {
   createdAt:  text('created_at').$defaultFn(() => new Date().toISOString()),
 })
 
+// ── Users & Sessions ─────────────────────────────────────
+
+export const users = sqliteTable('users', {
+  id:         text('id').primaryKey().$defaultFn(() => createId()),
+  username:   text('username').notNull().unique(),
+  passwordHash: text('password_hash').notNull(),
+  role:       text('role').notNull().default('employee'),  // 'admin' | 'employee'
+  employeeId: text('employee_id').references(() => employees.id, { onDelete: 'set null' }),
+})
+
+export const sessions = sqliteTable('sessions', {
+  id:        text('id').primaryKey().$defaultFn(() => createId()),
+  userId:    text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  expiresAt: text('expires_at').notNull(),
+})
+
 // ── Scheduler Config ────────────────────────────────────
 
 export const schedulerConfig = sqliteTable('scheduler_config', {
@@ -81,3 +96,5 @@ export type ScheduleEntry = typeof scheduleEntries.$inferSelect
 export type OrgColor = typeof organisationColors.$inferSelect
 export type Organisation = typeof organisations.$inferSelect
 export type ScheduleOverride = typeof scheduleOverrides.$inferSelect
+export type User = typeof users.$inferSelect
+export type Session = typeof sessions.$inferSelect

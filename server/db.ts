@@ -8,6 +8,11 @@ const dbPath = process.env.NODE_ENV === 'production' ? '/app/sqlite-data/sqlite.
 let _db: BetterSQLite3Database<typeof schema> | null = null
 
 function createTables(sqlite: InstanceType<typeof Database>) {
+  // Add shift_code column if missing (migration)
+  try { sqlite.exec('ALTER TABLE schedule_entries ADD COLUMN shift_code TEXT') } catch {}
+  // Drop unique constraint on bookings to allow multiple bookings per slot
+  try { sqlite.exec('DROP INDEX IF EXISTS bookings_uniq') } catch {}
+
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS rooms (
       id TEXT PRIMARY KEY,
@@ -24,7 +29,7 @@ function createTables(sqlite: InstanceType<typeof Database>) {
       slot INTEGER NOT NULL,
       organisation TEXT NOT NULL
     );
-    CREATE UNIQUE INDEX IF NOT EXISTS bookings_uniq ON bookings(room_id, week_key, day_index, slot);
+    CREATE INDEX IF NOT EXISTS bookings_slot_idx ON bookings(room_id, week_key, day_index, slot);
     CREATE TABLE IF NOT EXISTS employees (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
@@ -39,6 +44,25 @@ function createTables(sqlite: InstanceType<typeof Database>) {
       hours INTEGER NOT NULL DEFAULT 0
     );
     CREATE UNIQUE INDEX IF NOT EXISTS schedule_uniq ON schedule_entries(employee_id, date);
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'employee',
+      employee_id TEXT REFERENCES employees(id) ON DELETE SET NULL
+    );
+    CREATE TABLE IF NOT EXISTS sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      expires_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS schedule_overrides (
+      id TEXT PRIMARY KEY,
+      employee_id TEXT NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
+      date TEXT NOT NULL,
+      description TEXT NOT NULL,
+      created_at TEXT
+    );
     CREATE TABLE IF NOT EXISTS scheduler_config (
       id TEXT PRIMARY KEY DEFAULT 'default',
       config TEXT NOT NULL

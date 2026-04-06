@@ -172,7 +172,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
             placeholder="Rechercher un partenaire..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-surface border border-border/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all placeholder:text-muted"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-surface border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all placeholder:text-muted"
           />
         </div>
 
@@ -189,7 +189,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
               return (
                 <div
                   key={org.id}
-                  className="group bg-surface border border-border/60 rounded-xl p-5 hover:shadow-md transition-all"
+                  className="group bg-surface border border-border rounded-lg p-5 hover:shadow-md transition-all"
                 >
                   {/* Top row: tag + actions */}
                   <div className="flex items-start justify-between gap-2 mb-3">
@@ -260,7 +260,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                   </div>
 
                   {/* Footer badge */}
-                  <div className="mt-3 pt-3 border-t border-border/40">
+                  <div className="mt-3 pt-3 border-t border-border">
                     <span className="text-xs text-muted">
                       {count} reservation{count !== 1 ? 's' : ''}
                     </span>
@@ -302,7 +302,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                   required
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-bg border border-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                   placeholder="Nom du partenaire"
                 />
               </div>
@@ -312,7 +312,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                   type="text"
                   value={form.shortName}
                   onChange={(e) => setForm((f) => ({ ...f, shortName: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-bg border border-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                   placeholder="Abreviation"
                 />
               </div>
@@ -322,7 +322,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                   type="text"
                   value={form.contact}
                   onChange={(e) => setForm((f) => ({ ...f, contact: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm bg-bg border border-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                   placeholder="Nom du contact"
                 />
               </div>
@@ -333,7 +333,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                     type="tel"
                     value={form.phone}
                     onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm bg-bg border border-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                    className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                     placeholder="01 23 45 67 89"
                   />
                 </div>
@@ -343,7 +343,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                     type="email"
                     value={form.email}
                     onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    className="w-full px-3 py-2 text-sm bg-bg border border-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
+                    className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
                     placeholder="email@exemple.fr"
                   />
                 </div>
@@ -354,7 +354,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                   value={form.notes}
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm bg-bg border border-border/60 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
+                  className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
                   placeholder="Notes supplementaires..."
                 />
               </div>

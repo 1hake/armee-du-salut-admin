@@ -251,7 +251,9 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
         customColors={customColors}
         onSlotClick={(roomId, dayIndex, slot) => setBookingModal({ roomId, dayIndex, slot })}
         onDeleteBooking={(id) => deleteBookingMutation.mutate(id)}
-        onMoveBooking={(bookingId, roomId, dayIndex, slot) => moveBookingMutation.mutate({ id: bookingId, roomId, dayIndex, slot })}
+        onMoveBooking={(bookingId, roomId, dayIndex, slot) => {
+          moveBookingMutation.mutate({ id: bookingId, roomId, dayIndex, slot })
+        }}
         onDeleteRoom={(id) => deleteRoomMutation.mutate(id)}
         onUpdateCapacity={(id, capacity) => updateRoomMutation.mutate({ id, capacity })}
       />

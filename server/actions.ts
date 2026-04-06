@@ -79,10 +79,6 @@ export async function deleteOrgColor(organisation: string) {
 export async function moveBooking(id: string, roomId: string, dayIndex: number, slot: number) {
   const booking = db.select().from(bookings).where(eq(bookings.id, id)).get()
   if (!booking) return false
-  const existing = db.select().from(bookings).where(
-    and(eq(bookings.roomId, roomId), eq(bookings.weekKey, booking.weekKey), eq(bookings.dayIndex, dayIndex), eq(bookings.slot, slot))
-  ).get()
-  if (existing) return false
   await db.update(bookings).set({ roomId, dayIndex, slot }).where(eq(bookings.id, id))
   revalidatePath('/')
   return true
@@ -93,6 +89,14 @@ export async function getStats() {
   const allBookings = db.select().from(bookings).all()
   const allRooms = db.select().from(rooms).orderBy(rooms.position).all()
   return { bookings: allBookings, rooms: allRooms }
+}
+
+export async function getScheduleStats() {
+  const { employees: empTable, scheduleEntries: seTable, scheduleOverrides: soTable } = await import('./schema')
+  const allEmployees = db.select().from(empTable).orderBy(empTable.position).all()
+  const allEntries = db.select().from(seTable).all()
+  const allOverrides = db.select().from(soTable).all()
+  return { employees: allEmployees, entries: allEntries, overrides: allOverrides }
 }
 
 // ── Copy Week ─────────────────────────────────────────

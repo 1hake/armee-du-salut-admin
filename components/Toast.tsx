@@ -23,9 +23,7 @@ export function useToast() {
   const show = useCallback((message: string, type: ToastType = 'success', onConfirm?: () => void) => {
     const id = ++idCounter
     setToasts((prev) => [...prev, { id, message, type, onConfirm }])
-    if (type !== 'confirm') {
-      setTimeout(() => dismiss(id), 3000)
-    }
+    if (type !== 'confirm') setTimeout(() => dismiss(id), 3000)
     return id
   }, [dismiss])
 
@@ -40,7 +38,7 @@ export function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismi
   if (toasts.length === 0) return null
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm">
+    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-50 flex flex-col gap-2">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onDismiss={onDismiss} />
       ))}
@@ -49,49 +47,41 @@ export function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismi
 }
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number) => void }) {
-  const ref = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
   }, [])
 
-  const style =
+  const colors =
     toast.type === 'error'
-      ? 'bg-red-50 border-red-100 text-red-800'
+      ? 'bg-red-light text-red border-red/10'
       : toast.type === 'confirm'
-        ? 'bg-amber-50 border-amber-100 text-amber-900'
-        : 'bg-emerald-50 border-emerald-100 text-emerald-800'
+        ? 'bg-orange-50 text-orange-800 border-orange-100'
+        : 'bg-emerald-50 text-emerald-800 border-emerald-100'
 
   return (
     <div
-      ref={ref}
-      className={`border rounded-xl shadow-lg px-4 py-3 text-[13px] backdrop-blur-xl transition-all duration-200 ${style} ${
+      className={`border rounded-lg px-3.5 py-2.5 text-[13px] transition-all duration-150 ${colors} ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
       }`}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-center gap-2">
         <span className="flex-1">{toast.message}</span>
         {toast.type !== 'confirm' && (
-          <button onClick={() => onDismiss(toast.id)} className="opacity-40 hover:opacity-100 transition-opacity">
+          <button onClick={() => onDismiss(toast.id)} className="opacity-40 hover:opacity-100 transition-opacity shrink-0">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M4 4l6 6M10 4l-6 6"/></svg>
           </button>
         )}
       </div>
       {toast.type === 'confirm' && (
-        <div className="flex gap-2 mt-2.5">
-          <button
-            onClick={() => onDismiss(toast.id)}
-            className="px-3 py-1 text-xs font-medium rounded-full border border-amber-200 hover:bg-amber-100/50 transition-colors"
-          >
+        <div className="flex gap-2 mt-2">
+          <button onClick={() => onDismiss(toast.id)} className="px-3 py-1 text-[12px] font-medium rounded-md border border-border hover:bg-surface-hover transition-colors">
             Annuler
           </button>
           <button
-            onClick={() => {
-              toast.onConfirm?.()
-              onDismiss(toast.id)
-            }}
-            className="px-3 py-1 text-xs font-medium bg-amber-600 text-white rounded-full hover:bg-amber-700 transition-colors"
+            onClick={() => { toast.onConfirm?.(); onDismiss(toast.id) }}
+            className="px-3 py-1 text-[12px] font-medium bg-accent text-white rounded-md hover:opacity-90 transition-opacity"
           >
             Confirmer
           </button>
