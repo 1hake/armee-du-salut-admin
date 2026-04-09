@@ -8,8 +8,8 @@ interface Tab { href: string; label: string; icon?: React.ReactNode }
 
 const ADMIN_TABS: Tab[] = [
   { href: '/', label: 'Salles' },
-  { href: '/equipe/planning', label: "Planning d'equipe" },
-  { href: '/equipe', label: 'Creer planning' },
+  { href: '/equipe/planning', label: "Planning d'équipe" },
+  { href: '/equipe', label: 'Créer planning' },
   { href: '/partenaires', label: 'Partenaires' },
   { href: '/stats', label: 'Statistiques' },
   { href: '/admin/users', label: 'Comptes' },
@@ -52,7 +52,7 @@ export function Nav({ role, username }: Props) {
               onClick={() => logout()}
               className="text-[13px] text-muted hover:text-ink transition-colors px-2 py-1"
             >
-              Deconnexion
+              Déconnexion
             </button>
           </div>
         </header>
@@ -72,7 +72,7 @@ export function Nav({ role, username }: Props) {
               <rect x="3" y="6.5" width="10" height="3" rx="0.5" fill="white"/>
             </svg>
           </div>
-          <span className="text-[13px] font-semibold text-ink hidden sm:inline">Armee du Salut</span>
+          <span className="text-[13px] font-semibold text-ink hidden sm:inline">Armée du Salut</span>
         </Link>
 
         {/* Tab links */}
@@ -101,7 +101,7 @@ export function Nav({ role, username }: Props) {
             onClick={() => logout()}
             className="text-[12px] text-muted hover:text-ink transition-colors px-1.5 py-0.5 rounded hover:bg-surface-hover"
           >
-            Deconnexion
+            Déconnexion
           </button>
         </div>
       </div>

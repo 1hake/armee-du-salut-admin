@@ -43,7 +43,7 @@ export function EmployeeList({ employees, onAdd, onRename, onDelete }: Props) {
 
   return (
     <div className="rounded-lg bg-surface border border-border p-4">
-      <h2 className="text-[13px] font-semibold mb-3">Salaries ({employees.length}/5)</h2>
+      <h2 className="text-[13px] font-semibold mb-3">Salariés ({employees.length}/5)</h2>
 
       <ul className="space-y-0.5 mb-3">
         {employees.map((emp) => (
@@ -96,7 +96,7 @@ export function EmployeeList({ employees, onAdd, onRename, onDelete }: Props) {
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Nom du salarie"
+          placeholder="Nom du salarié"
           className="flex-1 border border-border rounded-lg px-3 py-2 text-[13px] bg-bg/50 focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent/30 transition-all"
           onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
         />

@@ -149,7 +149,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
       copyPreviousWeek(target, source),
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ['bookings', currentWeekKey] })
-      toast.success(count ? `${count} reservation(s) copiee(s)` : 'Aucune reservation a copier')
+      toast.success(count ? `${count} réservation(s) copiée(s)` : 'Aucune réservation à copier')
     },
     onError: () => {
       toast.error('Erreur lors de la copie')
@@ -227,7 +227,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
         onPrint={() => window.open(`/print?week=${currentWeekKey}`, '_blank')}
         onCopyPrevWeek={() => {
           toast.confirm(
-            'Copier les reservations de la semaine precedente ? Les reservations existantes seront remplacees.',
+            'Copier les réservations de la semaine précédente ? Les réservations existantes seront remplacées.',
             () => {
               copyPrevWeekMutation.mutate({
                 target: currentWeekKey,

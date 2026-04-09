@@ -38,7 +38,7 @@ export function UsersClient({ initialUsers, employees }: Props) {
       setNewPassword('')
       setNewRole('employee')
       setNewEmployeeId('')
-      toast.success('Compte cree')
+      toast.success('Compte créé')
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Erreur'),
   })
@@ -49,7 +49,7 @@ export function UsersClient({ initialUsers, employees }: Props) {
     onSuccess: () => {
       setEditingPassword(null)
       setEditPassword('')
-      toast.success('Mot de passe modifie')
+      toast.success('Mot de passe modifié')
     },
     onError: (err) => toast.error(err instanceof Error ? err.message : 'Erreur'),
   })
@@ -58,7 +58,7 @@ export function UsersClient({ initialUsers, employees }: Props) {
     mutationFn: (id: string) => deleteUser(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] })
-      toast.success('Compte supprime')
+      toast.success('Compte supprimé')
     },
   })
 
@@ -108,18 +108,18 @@ export function UsersClient({ initialUsers, employees }: Props) {
               />
             </div>
             <div>
-              <label className="block text-[12px] text-muted mb-1">Role</label>
+              <label className="block text-[12px] text-muted mb-1">Rôle</label>
               <select
                 value={newRole}
                 onChange={(e) => setNewRole(e.target.value as 'admin' | 'employee')}
                 className="w-full h-9 px-3 text-[14px] rounded-md border border-border-strong bg-bg focus:outline-none focus:border-accent"
               >
-                <option value="employee">Employe</option>
+                <option value="employee">Employé</option>
                 <option value="admin">Admin</option>
               </select>
             </div>
             <div>
-              <label className="block text-[12px] text-muted mb-1">Salarie lie</label>
+              <label className="block text-[12px] text-muted mb-1">Salarié lié</label>
               <select
                 value={newEmployeeId}
                 onChange={(e) => setNewEmployeeId(e.target.value)}
@@ -137,7 +137,7 @@ export function UsersClient({ initialUsers, employees }: Props) {
                 disabled={createMutation.isPending}
                 className="h-8 px-4 text-[13px] font-medium rounded-md bg-accent text-white hover:opacity-90 transition-opacity disabled:opacity-50"
               >
-                {createMutation.isPending ? 'Creation...' : 'Creer le compte'}
+                {createMutation.isPending ? 'Création...' : 'Créer le compte'}
               </button>
             </div>
           </form>
@@ -149,8 +149,8 @@ export function UsersClient({ initialUsers, employees }: Props) {
         {/* Header - hidden on mobile */}
         <div className="hidden sm:grid grid-cols-[1fr_80px_120px_160px] text-[12px] text-muted border-b border-border bg-surface-hover">
           <div className="px-3 py-2">Identifiant</div>
-          <div className="px-3 py-2">Role</div>
-          <div className="px-3 py-2">Salarie</div>
+          <div className="px-3 py-2">Rôle</div>
+          <div className="px-3 py-2">Salarié</div>
           <div className="px-3 py-2">Actions</div>
         </div>
         {userList.map((user) => (

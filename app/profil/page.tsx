@@ -16,7 +16,7 @@ export default async function ProfilPage() {
           Mon planning
         </h1>
         <div className="rounded-xl bg-surface border border-border/60 shadow-sm p-8 sm:p-16 text-center text-muted text-[15px]">
-          Votre compte n&apos;est pas lie a un salarie. Contactez un administrateur.
+          Votre compte n&apos;est pas lié à un salarié. Contactez un administrateur.
         </div>
       </div>
     )

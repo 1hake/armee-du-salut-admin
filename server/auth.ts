@@ -104,7 +104,7 @@ export async function getUsers() {
 
 export async function createUser(username: string, password: string, role: string, employeeId: string | null) {
   const existing = db.select().from(users).where(eq(users.username, username)).get()
-  if (existing) throw new Error('Ce nom d\'utilisateur existe deja')
+  if (existing) throw new Error('Ce nom d\'utilisateur existe déjà')
 
   db.insert(users).values({
     username,

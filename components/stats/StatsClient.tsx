@@ -80,7 +80,7 @@ function Donut({ segments, size = 120 }: {
   segments: { value: number; color: string; label: string }[]; size?: number
 }) {
   const total = segments.reduce((s, seg) => s + seg.value, 0)
-  if (total === 0) return <p className="text-sm text-muted">Aucune donnee</p>
+  if (total === 0) return <p className="text-sm text-muted">Aucune donnée</p>
   const r = (size - 12) / 2
   const cx = size / 2
   const cy = size / 2
@@ -151,7 +151,7 @@ function HeatCell({ value, max }: { value: number; max: number }) {
 const SHIFT_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   M: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Matin' },
   S: { bg: 'bg-amber-50', text: 'text-amber-700', label: 'Soir' },
-  J: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Journee' },
+  J: { bg: 'bg-emerald-50', text: 'text-emerald-700', label: 'Journée' },
   W: { bg: 'bg-violet-50', text: 'text-violet-700', label: 'Week-end' },
   R: { bg: 'bg-gray-50', text: 'text-gray-400', label: 'Repos' },
 }
@@ -251,7 +251,7 @@ export function StatsClient({ stats, customColors, scheduleStats }: Props) {
     }
     const busiestCombo = Object.entries(daySlotCounts).sort((a, b) => b[1] - a[1])[0]
     const busiestLabel = busiestCombo
-      ? `${DAYS_FR[parseInt(busiestCombo[0].split('-')[0])]} ${parseInt(busiestCombo[0].split('-')[1]) === 0 ? 'matin' : 'apres-midi'}`
+      ? `${DAYS_FR[parseInt(busiestCombo[0].split('-')[0])]} ${parseInt(busiestCombo[0].split('-')[1]) === 0 ? 'matin' : 'après-midi'}`
       : '—'
 
     return {
@@ -319,7 +319,7 @@ export function StatsClient({ stats, customColors, scheduleStats }: Props) {
       <div className="flex items-center justify-between">
         <h1 className="text-[22px] font-bold">Statistiques</h1>
         <div className="inline-flex gap-0.5">
-          {([['salles', 'Salles'], ['equipe', 'Equipe']] as const).map(([key, label]) => (
+          {([['salles', 'Salles'], ['equipe', 'Équipe']] as const).map(([key, label]) => (
             <button
               key={key}
               onClick={() => setTab(key)}
@@ -352,17 +352,17 @@ function RoomStats({ computed, customColors, rooms }: {
     <div className="space-y-5">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <SummaryCard icon={IconBooking} value={computed.totalBookings} label="Reservations" accent="bg-blue-50" />
+        <SummaryCard icon={IconBooking} value={computed.totalBookings} label="Réservations" accent="bg-blue-50" />
         <SummaryCard icon={IconRoom} value={computed.activeRooms} label="Salles actives" accent="bg-violet-50" />
         <SummaryCard icon={IconOrg} value={computed.orgCount} label="Partenaires" accent="bg-emerald-50" />
-        <SummaryCard icon={IconRate} value={`${computed.occupancy}%`} label="Taux d'occupation" accent="bg-amber-50" sub={`Creneau le plus charge : ${computed.busiestLabel}`} />
+        <SummaryCard icon={IconRate} value={`${computed.occupancy}%`} label="Taux d'occupation" accent="bg-amber-50" sub={`Créneau le plus chargé : ${computed.busiestLabel}`} />
       </div>
 
       {/* Org + Room breakdown */}
       <div className="grid lg:grid-cols-2 gap-5">
-        <Section title="Reservations par partenaire" subtitle={`${computed.orgBreakdown.length} partenaires actifs`}>
+        <Section title="Réservations par partenaire" subtitle={`${computed.orgBreakdown.length} partenaires actifs`}>
           {computed.orgBreakdown.length === 0 ? (
-            <p className="text-[13px] text-muted">Aucune donnee</p>
+            <p className="text-[13px] text-muted">Aucune donnée</p>
           ) : (
             <div className="space-y-0.5 max-h-[300px] overflow-y-auto pr-1">
               {computed.orgBreakdown.map((o: any) => {
@@ -375,7 +375,7 @@ function RoomStats({ computed, customColors, rooms }: {
 
         <Section title="Utilisation par salle">
           {computed.roomBreakdown.length === 0 ? (
-            <p className="text-[13px] text-muted">Aucune donnee</p>
+            <p className="text-[13px] text-muted">Aucune donnée</p>
           ) : (
             <div className="space-y-0.5">
               {computed.roomBreakdown.map((r: any) => (
@@ -394,7 +394,7 @@ function RoomStats({ computed, customColors, rooms }: {
       </div>
 
       {/* Heatmap */}
-      <Section title="Carte de chaleur" subtitle="Reservations par salle et par jour">
+      <Section title="Carte de chaleur" subtitle="Réservations par salle et par jour">
         <div className="overflow-x-auto -mx-1">
           <div className="min-w-[500px]">
             {/* Header */}
@@ -418,9 +418,9 @@ function RoomStats({ computed, customColors, rooms }: {
       </Section>
 
       {/* Weekly trend */}
-      <Section title="Tendance hebdomadaire" subtitle="12 dernieres semaines">
+      <Section title="Tendance hebdomadaire" subtitle="12 dernières semaines">
         {computed.weeklyTrend.length === 0 ? (
-          <p className="text-[13px] text-muted">Aucune donnee</p>
+          <p className="text-[13px] text-muted">Aucune donnée</p>
         ) : (
           <div className="flex items-end gap-1.5 h-40">
             {computed.weeklyTrend.map((w: any) => {
@@ -465,17 +465,17 @@ function RoomStats({ computed, customColors, rooms }: {
           </div>
         </Section>
 
-        <Section title="Par creneau">
+        <Section title="Par créneau">
           <Donut
             size={100}
             segments={[
               { value: computed.morningCount, color: '#3B82F6', label: 'Matin' },
-              { value: computed.afternoonCount, color: '#8B5CF6', label: 'Apres-midi' },
+              { value: computed.afternoonCount, color: '#8B5CF6', label: 'Après-midi' },
             ]}
           />
         </Section>
 
-        <Section title="Par etage">
+        <Section title="Par étage">
           {computed.floorBreakdown.map((f: any) => (
             <div key={f.floor} className="flex items-center justify-between py-2 border-b border-border last:border-0">
               <div>
@@ -484,7 +484,7 @@ function RoomStats({ computed, customColors, rooms }: {
               </div>
               <div className="text-right">
                 <div className="text-[15px] font-bold tabular-nums">{f.bookings}</div>
-                <div className="text-[10px] text-muted">reservations</div>
+                <div className="text-[10px] text-muted">réservations</div>
               </div>
             </div>
           ))}
@@ -502,7 +502,7 @@ function EquipeStats({ computed, employees }: {
   if (!computed) {
     return (
       <div className="rounded-lg bg-surface border border-border p-8 sm:p-16 text-center text-muted text-[15px]">
-        Aucun planning enregistre. Generez et enregistrez un planning pour voir les statistiques.
+        Aucun planning enregistré. Générez et enregistrez un planning pour voir les statistiques.
       </div>
     )
   }
@@ -511,13 +511,13 @@ function EquipeStats({ computed, employees }: {
     <div className="space-y-5">
       {/* Summary Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <SummaryCard icon={IconEmployee} value={employees.length} label="Salaries" accent="bg-red-50" />
+        <SummaryCard icon={IconEmployee} value={employees.length} label="Salariés" accent="bg-red-50" />
         <SummaryCard
           icon={IconHours}
           value={`${computed.totalHours}h`}
           label="Heures totales"
           accent="bg-blue-50"
-          sub={`${computed.totalWeeks} semaines planifiees`}
+          sub={`${computed.totalWeeks} semaines planifiées`}
         />
         <SummaryCard
           icon={IconWeekend}
@@ -535,7 +535,7 @@ function EquipeStats({ computed, employees }: {
 
       {/* Hours per employee + Shift donut */}
       <div className="grid lg:grid-cols-[1fr_350px] gap-5">
-        <Section title="Heures par salarie" subtitle="Total sur la periode planifiee">
+        <Section title="Heures par salarié" subtitle="Total sur la période planifiée">
           <div className="space-y-0.5">
             {computed.empStats.map((e: any) => (
               <BarRow
@@ -550,12 +550,12 @@ function EquipeStats({ computed, employees }: {
           </div>
         </Section>
 
-        <Section title="Repartition des postes">
+        <Section title="Répartition des postes">
           <Donut
             segments={[
               { value: computed.shiftCounts.M, color: SHIFT_COLORS.M, label: 'Matin' },
               { value: computed.shiftCounts.S, color: SHIFT_COLORS.S, label: 'Soir' },
-              { value: computed.shiftCounts.J, color: SHIFT_COLORS.J, label: 'Journee' },
+              { value: computed.shiftCounts.J, color: SHIFT_COLORS.J, label: 'Journée' },
               { value: computed.shiftCounts.W, color: SHIFT_COLORS.W, label: 'Week-end' },
             ]}
           />
@@ -564,7 +564,7 @@ function EquipeStats({ computed, employees }: {
 
       {/* Weekend distribution + shift breakdown per employee */}
       <div className="grid lg:grid-cols-2 gap-5">
-        <Section title="Week-ends par salarie" subtitle="Equite de la repartition">
+        <Section title="Week-ends par salarié" subtitle="Équité de la répartition">
           <div className="space-y-0.5">
             {computed.empStats.map((e: any) => (
               <BarRow
@@ -578,7 +578,7 @@ function EquipeStats({ computed, employees }: {
           </div>
         </Section>
 
-        <Section title="Detail par salarie">
+        <Section title="Détail par salarié">
           <div className="overflow-x-auto -mx-1">
             <table className="w-full text-[12px]">
               <thead>

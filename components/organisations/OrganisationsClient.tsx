@@ -55,7 +55,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organisations'] })
-      toast.success('Partenaire ajoute')
+      toast.success('Partenaire ajouté')
       closeModal()
     },
     onError: () => toast.error('Erreur lors de l\'ajout'),
@@ -72,10 +72,10 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organisations'] })
-      toast.success('Partenaire mis a jour')
+      toast.success('Partenaire mis à jour')
       closeModal()
     },
-    onError: () => toast.error('Erreur lors de la mise a jour'),
+    onError: () => toast.error('Erreur lors de la mise à jour'),
   })
 
   const deleteMutation = useMutation({
@@ -92,7 +92,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['organisations'] })
-      toast.success('Partenaire supprime')
+      toast.success('Partenaire supprimé')
     },
   })
 
@@ -147,7 +147,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
-            <h1 className="font-display text-2xl font-bold text-ink">Repertoire des partenaires</h1>
+            <h1 className="font-display text-2xl font-bold text-ink">Répertoire des partenaires</h1>
             <p className="text-sm text-muted mt-0.5">{orgs.length} partenaire{orgs.length !== 1 ? 's' : ''}</p>
           </div>
           <button
@@ -179,7 +179,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
         {/* Grid */}
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-muted text-sm">
-            {search ? 'Aucun partenaire trouve' : 'Aucun partenaire enregistre'}
+            {search ? 'Aucun partenaire trouvé' : 'Aucun partenaire enregistré'}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -262,7 +262,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                   {/* Footer badge */}
                   <div className="mt-3 pt-3 border-t border-border">
                     <span className="text-xs text-muted">
-                      {count} reservation{count !== 1 ? 's' : ''}
+                      {count} réservation{count !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
@@ -313,7 +313,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                   value={form.shortName}
                   onChange={(e) => setForm((f) => ({ ...f, shortName: e.target.value }))}
                   className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all"
-                  placeholder="Abreviation"
+                  placeholder="Abréviation"
                 />
               </div>
               <div>
@@ -328,7 +328,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1 uppercase tracking-wider">Telephone</label>
+                  <label className="block text-xs font-medium text-muted mb-1 uppercase tracking-wider">Téléphone</label>
                   <input
                     type="tel"
                     value={form.phone}
@@ -355,7 +355,7 @@ export function OrganisationsClient({ initialOrgs, customColors, bookingCounts }
                   onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
                   rows={3}
                   className="w-full px-3 py-2 text-sm bg-bg border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-accent/20 focus:border-accent transition-all resize-none"
-                  placeholder="Notes supplementaires..."
+                  placeholder="Notes supplémentaires..."
                 />
               </div>
 

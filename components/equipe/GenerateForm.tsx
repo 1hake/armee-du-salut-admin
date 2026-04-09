@@ -19,7 +19,7 @@ export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: P
 
   return (
     <div className="rounded-lg bg-surface border border-border p-4">
-      <h2 className="text-[13px] font-semibold mb-3">Generer le planning</h2>
+      <h2 className="text-[13px] font-semibold mb-3">Générer le planning</h2>
 
       {/* Shift info */}
       <div className="rounded-lg bg-bg/50 border border-border p-3 mb-4 space-y-1.5">
@@ -35,13 +35,13 @@ export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: P
           )
         })}
         <div className="text-[11px] text-muted mt-1">
-          Pause dej : 13h–14h &middot; 35h/semaine lissees sur le cycle
+          Pause déj : 13h–14h &middot; 35h/semaine lissées sur le cycle
         </div>
       </div>
 
       <div className="space-y-3">
         <div>
-          <label className="block text-[12px] font-medium text-muted mb-1.5">Semaine de debut (lundi)</label>
+          <label className="block text-[12px] font-medium text-muted mb-1.5">Semaine de début (lundi)</label>
           <input
             type="date"
             value={startDate}
@@ -62,7 +62,7 @@ export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: P
             ))}
           </select>
           <p className="text-[11px] text-muted mt-1">
-            L&apos;ordre des salaries tourne a chaque cycle pour une rotation equitable
+            L&apos;ordre des salariés tourne à chaque cycle pour une rotation équitable
           </p>
         </div>
 
@@ -71,11 +71,11 @@ export function GenerateForm({ disabled, loading, employeeCount, onGenerate }: P
           disabled={needsExactly5 || loading}
           className="w-full px-4 py-2.5 text-[13px] font-medium bg-accent text-white rounded-md hover:brightness-110 transition-all disabled:opacity-30 active:scale-[0.98]"
         >
-          {loading ? 'Generation...' : 'Generer le planning'}
+          {loading ? 'Génération...' : 'Générer le planning'}
         </button>
 
         {needsExactly5 && (
-          <p className="text-[12px] text-red-500">Exactement 5 salaries requis</p>
+          <p className="text-[12px] text-red-500">Exactement 5 salariés requis</p>
         )}
       </div>
     </div>

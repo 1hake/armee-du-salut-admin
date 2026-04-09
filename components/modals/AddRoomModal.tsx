@@ -39,7 +39,7 @@ export function AddRoomModal({ onConfirm, onClose }: Props) {
         {/* Body */}
         <div className="px-5 sm:px-6 pb-5 sm:pb-6 space-y-3">
           <div>
-            <label className="block text-sm font-medium mb-1.5">Etage</label>
+            <label className="block text-sm font-medium mb-1.5">Étage</label>
             <div className="flex gap-1.5">
               {FLOORS.map((f) => (
                 <button

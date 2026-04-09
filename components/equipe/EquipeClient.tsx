@@ -47,7 +47,7 @@ export function EquipeClient({ initialEmployees }: Props) {
     mutationFn: (params: { id: string; name: string }) => renameEmployee(params.id, params.name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
-      toast.success('Nom modifie')
+      toast.success('Nom modifié')
     },
   })
 
@@ -55,7 +55,7 @@ export function EquipeClient({ initialEmployees }: Props) {
     mutationFn: (name: string) => addEmployee(name),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['employees'] })
-      toast.success('Salarie ajoute')
+      toast.success('Salarié ajouté')
     },
   })
 
@@ -80,7 +80,7 @@ export function EquipeClient({ initialEmployees }: Props) {
       addScheduleOverride(params.employeeId, params.date, params.description),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['scheduleOverrides'] })
-      toast.success('Changement ajoute')
+      toast.success('Changement ajouté')
     },
   })
 
@@ -96,17 +96,17 @@ export function EquipeClient({ initialEmployees }: Props) {
       generateSchedulePreview(params.startDate, params.cycles),
     onSuccess: (result) => {
       setSchedule(result)
-      toast.success(`Planning genere : ${result.weeks.length} semaines (non enregistre)`)
+      toast.success(`Planning généré : ${result.weeks.length} semaines (non enregistré)`)
     },
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors de la generation')
+      toast.error(err instanceof Error ? err.message : 'Erreur lors de la génération')
     },
   })
 
   const saveMutation = useMutation({
     mutationFn: () => saveSchedule(schedule!),
     onSuccess: () => {
-      toast.success('Planning enregistre')
+      toast.success('Planning enregistré')
     },
     onError: (err) => {
       toast.error(err instanceof Error ? err.message : 'Erreur lors de l\'enregistrement')
@@ -115,7 +115,7 @@ export function EquipeClient({ initialEmployees }: Props) {
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6">
-      <h1 className="text-[22px] font-bold mb-6">Creer planning</h1>
+      <h1 className="text-[22px] font-bold mb-6">Créer planning</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
         {/* Left sidebar */}
@@ -177,7 +177,7 @@ export function EquipeClient({ initialEmployees }: Props) {
 
           {!schedule && (
             <div className="border border-border rounded-lg p-8 sm:p-16 text-center text-muted text-[14px]">
-              Configurez les salaries et generez le planning
+              Configurez les salariés et générez le planning
             </div>
           )}
         </div>

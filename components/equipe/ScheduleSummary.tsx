@@ -16,15 +16,15 @@ export function ScheduleSummary({ summary, weeks }: Props) {
         <table className="w-full text-[13px] min-w-[600px]">
           <thead>
             <tr className="border-b border-border bg-surface-hover">
-              <th className="text-left px-3.5 py-2.5 text-[12px] font-medium text-muted">Salarie</th>
+              <th className="text-left px-3.5 py-2.5 text-[12px] font-medium text-muted">Salarié</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Weekends</th>
-              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Jours travailles</th>
+              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Jours travaillés</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Jours repos</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">H. travail</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-muted">Moy./sem</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-blue-500">Matin</th>
               <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-amber-500">Soir</th>
-              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-emerald-500">Journee</th>
+              <th className="text-center px-3.5 py-2.5 text-[12px] font-medium text-emerald-500">Journée</th>
             </tr>
           </thead>
           <tbody>

@@ -30,9 +30,9 @@ export function PlanningView({ initialWeeks }: Props) {
   if (weeks.length === 0) {
     return (
       <div className="max-w-[1200px] mx-auto px-4 py-6">
-        <h1 className="text-[22px] font-bold mb-6">Planning d&apos;equipe</h1>
+        <h1 className="text-[22px] font-bold mb-6">Planning d&apos;équipe</h1>
         <div className="border border-border rounded-lg p-8 sm:p-16 text-center text-muted text-[14px]">
-          Aucun planning enregistre. Un administrateur doit d&apos;abord generer le planning.
+          Aucun planning enregistré. Un administrateur doit d&apos;abord générer le planning.
         </div>
       </div>
     )
@@ -52,7 +52,7 @@ export function PlanningView({ initialWeeks }: Props) {
 
   return (
     <div className="max-w-[1200px] mx-auto px-4 py-6">
-      <h1 className="text-[22px] font-bold mb-6">Planning d&apos;equipe</h1>
+      <h1 className="text-[22px] font-bold mb-6">Planning d&apos;équipe</h1>
 
       <div className="space-y-3">
         {/* Legend */}

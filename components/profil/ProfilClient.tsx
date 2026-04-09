@@ -13,7 +13,7 @@ interface Props {
 const SHIFT_STYLE: Record<string, { bg: string; text: string; label: string; dot: string }> = {
   M: { bg: 'bg-blue-50', text: 'text-blue-600', label: 'Matin', dot: 'bg-blue-400' },
   S: { bg: 'bg-orange-50', text: 'text-orange-600', label: 'Soir', dot: 'bg-orange-400' },
-  J: { bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Journee', dot: 'bg-emerald-400' },
+  J: { bg: 'bg-emerald-50', text: 'text-emerald-600', label: 'Journée', dot: 'bg-emerald-400' },
   W: { bg: 'bg-purple-50', text: 'text-purple-600', label: 'Week-end', dot: 'bg-purple-400' },
 }
 

@@ -44,7 +44,7 @@ export default function LoginPage() {
         </div>
 
         <h1 className="text-[22px] font-bold text-center mb-1">Connexion</h1>
-        <p className="text-[14px] text-muted text-center mb-8">Armee du Salut — Administration</p>
+        <p className="text-[14px] text-muted text-center mb-8">Armée du Salut — Administration</p>
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>

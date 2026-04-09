@@ -31,7 +31,7 @@ export function ScheduleOverrides({ overrides, employees, onAdd, onDelete }: Pro
 
       <form onSubmit={handleSubmit} className="flex flex-wrap gap-2 items-end">
         <div className="space-y-1">
-          <label className="text-[11px] text-muted">Salarie</label>
+          <label className="text-[11px] text-muted">Salarié</label>
           <select
             value={employeeId}
             onChange={(e) => setEmployeeId(e.target.value)}
@@ -60,7 +60,7 @@ export function ScheduleOverrides({ overrides, employees, onAdd, onDelete }: Pro
             type="text"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Ex: Repos maladie, Echange avec..."
+            placeholder="Ex: Repos maladie, Échange avec..."
             className="block w-full text-[13px] border border-border rounded-lg px-2.5 py-1.5 bg-bg focus:outline-none focus:ring-2 focus:ring-accent/20"
           />
         </div>
@@ -98,7 +98,7 @@ export function ScheduleOverrides({ overrides, employees, onAdd, onDelete }: Pro
       )}
 
       {overrides.length === 0 && (
-        <p className="text-[12px] text-muted">Aucun changement ponctuel enregistre.</p>
+        <p className="text-[12px] text-muted">Aucun changement ponctuel enregistré.</p>
       )}
     </div>
   )
