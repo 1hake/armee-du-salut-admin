@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getRooms, getBookings, addBooking, deleteBooking, moveBooking, addRoom, deleteRoom, updateRoom, copyPreviousWeek, getOrganisations, getOrganisationsList, getOrgColors, setOrgColor, deleteOrgColor } from '@/server/actions'
+import { getRooms, getBookings, addBooking, deleteBooking, moveBooking, addRoom, deleteRoom, updateRoom, copyPreviousWeek, getOrganisations, getOrganisationsList, getOrgColors, setOrgColor, deleteOrgColor, updateBookingComment, saveWeekAsTemplate, applyTemplateToWeek, hasTemplate } from '@/server/actions'
 import { getWeekKey, shiftWeek } from '@/lib/weekUtils'
 import { getOrgColor } from '@/lib/orgColors'
 import type { Room, Booking } from '@/server/schema'
@@ -107,6 +107,28 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     },
   })
 
+  const updateCommentMutation = useMutation({
+    mutationFn: ({ id, comment }: { id: string; comment: string | null }) =>
+      updateBookingComment(id, comment),
+    onMutate: async ({ id, comment }) => {
+      await queryClient.cancelQueries({ queryKey: ['bookings', currentWeekKey] })
+      const previous = queryClient.getQueryData<Booking[]>(['bookings', currentWeekKey])
+      queryClient.setQueryData<Booking[]>(
+        ['bookings', currentWeekKey],
+        (old) => old?.map((b) => b.id === id ? { ...b, comment } : b) ?? []
+      )
+      return { previous }
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(['bookings', currentWeekKey], context.previous)
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['bookings', currentWeekKey] })
+    },
+  })
+
   const addBookingMutation = useMutation({
     mutationFn: ({ roomId, weekKey, dayIndex, slot, organisation }: {
       roomId: string; weekKey: string; dayIndex: number; slot: number; organisation: string
@@ -154,6 +176,29 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     onError: () => {
       toast.error('Erreur lors de la copie')
     },
+  })
+
+  const { data: templateExists = false } = useQuery({
+    queryKey: ['hasTemplate'],
+    queryFn: () => hasTemplate(),
+  })
+
+  const saveTemplateMutation = useMutation({
+    mutationFn: (weekKey: string) => saveWeekAsTemplate(weekKey),
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['hasTemplate'] })
+      toast.success(count ? `Modèle enregistré (${count} réservations)` : 'Modèle vide enregistré')
+    },
+    onError: () => toast.error("Erreur lors de l'enregistrement du modèle"),
+  })
+
+  const applyTemplateMutation = useMutation({
+    mutationFn: (targetWeekKey: string) => applyTemplateToWeek(targetWeekKey),
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['bookings', currentWeekKey] })
+      toast.success(count ? `Modèle appliqué (${count} réservations)` : 'Aucun modèle à appliquer')
+    },
+    onError: () => toast.error("Erreur lors de l'application du modèle"),
   })
 
   const deleteRoomMutation = useMutation({
@@ -219,6 +264,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
     <div className="max-w-[1400px] mx-auto px-3 sm:px-6 py-5 sm:py-8">
       <Header
         weekKey={currentWeekKey}
+        hasTemplate={templateExists}
         onPrev={() => setCurrentWeekKey((k) => shiftWeek(k, -1))}
         onNext={() => setCurrentWeekKey((k) => shiftWeek(k, 1))}
         onToday={() => setCurrentWeekKey(getWeekKey(new Date()))}
@@ -234,6 +280,18 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
                 source: shiftWeek(currentWeekKey, -1),
               })
             }
+          )
+        }}
+        onSaveAsTemplate={() => {
+          toast.confirm(
+            'Enregistrer cette semaine comme modèle ? Le modèle précédent sera remplacé.',
+            () => saveTemplateMutation.mutate(currentWeekKey)
+          )
+        }}
+        onApplyTemplate={() => {
+          toast.confirm(
+            'Appliquer le modèle à cette semaine ? Les réservations existantes seront remplacées.',
+            () => applyTemplateMutation.mutate(currentWeekKey)
           )
         }}
       />
@@ -256,6 +314,7 @@ export function PlanningClient({ initialRooms, initialBookings, initialWeekKey }
         }}
         onDeleteRoom={(id) => deleteRoomMutation.mutate(id)}
         onUpdateCapacity={(id, capacity) => updateRoomMutation.mutate({ id, capacity })}
+        onUpdateComment={(id, comment) => updateCommentMutation.mutate({ id, comment })}
       />
 
       {bookingModal && (

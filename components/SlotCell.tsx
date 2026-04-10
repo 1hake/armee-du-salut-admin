@@ -17,9 +17,10 @@ interface Props {
   onClick: () => void
   onDeleteBooking: (id: string) => void
   onMoveBooking?: (bookingId: string, roomId: string, dayIndex: number, slot: number) => void
+  onUpdateComment?: (id: string, comment: string | null) => void
 }
 
-export function SlotCell({ bookings, roomId, dayIndex, slot, isToday, isAfternoon, isLastDayAfternoon, isMorning, customColors, onClick, onDeleteBooking, onMoveBooking }: Props) {
+export function SlotCell({ bookings, roomId, dayIndex, slot, isToday, isAfternoon, isLastDayAfternoon, isMorning, customColors, onClick, onDeleteBooking, onMoveBooking, onUpdateComment }: Props) {
   const [dragOver, setDragOver] = useState(false)
 
   const bgClass = isToday
@@ -60,8 +61,10 @@ export function SlotCell({ bookings, roomId, dayIndex, slot, isToday, isAfternoo
           key={booking.id}
           bookingId={booking.id}
           organisation={booking.organisation}
+          comment={booking.comment}
           customColors={customColors}
           onDelete={() => onDeleteBooking(booking.id)}
+          onUpdateComment={onUpdateComment}
         />
       ))}
     </div>

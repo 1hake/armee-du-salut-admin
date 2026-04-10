@@ -1,4 +1,4 @@
-import { requireAuth } from '@/server/auth'
+import { requireAdmin } from '@/server/auth'
 import { getSavedSchedule } from '@/server/equipeActions'
 import { Providers } from '@/app/providers'
 import { PlanningView } from '@/components/equipe/PlanningView'
@@ -6,7 +6,7 @@ import { PlanningView } from '@/components/equipe/PlanningView'
 export const dynamic = 'force-dynamic'
 
 export default async function PlanningPage() {
-  await requireAuth()
+  await requireAdmin()
   const weeks = await getSavedSchedule()
 
   return (

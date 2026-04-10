@@ -2,7 +2,7 @@
 
 import { db } from './db'
 import { rooms, bookings, organisationColors, organisations } from './schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, ne } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 
 // ── Rooms ──────────────────────────────────────────────
@@ -28,7 +28,7 @@ export async function updateRoom(id: string, data: { capacity?: number | null })
 
 // ── Organisations (distinct from all bookings) ─────────
 export async function getOrganisations(): Promise<string[]> {
-  const rows = db.select({ organisation: bookings.organisation }).from(bookings).all()
+  const rows = db.select({ organisation: bookings.organisation }).from(bookings).where(ne(bookings.weekKey, '__template__')).all()
   return [...new Set(rows.map((r) => r.organisation))].sort()
 }
 
@@ -47,6 +47,11 @@ export async function addBooking(
 
 export async function deleteBooking(id: string) {
   await db.delete(bookings).where(eq(bookings.id, id))
+  revalidatePath('/')
+}
+
+export async function updateBookingComment(id: string, comment: string | null) {
+  await db.update(bookings).set({ comment }).where(eq(bookings.id, id))
   revalidatePath('/')
 }
 
@@ -86,7 +91,7 @@ export async function moveBooking(id: string, roomId: string, dayIndex: number, 
 
 // ── Stats ─────────────────────────────────────────────
 export async function getStats() {
-  const allBookings = db.select().from(bookings).all()
+  const allBookings = db.select().from(bookings).where(ne(bookings.weekKey, '__template__')).all()
   const allRooms = db.select().from(rooms).orderBy(rooms.position).all()
   return { bookings: allBookings, rooms: allRooms }
 }
@@ -97,6 +102,51 @@ export async function getScheduleStats() {
   const allEntries = db.select().from(seTable).all()
   const allOverrides = db.select().from(soTable).all()
   return { employees: allEmployees, entries: allEntries, overrides: allOverrides }
+}
+
+// ── Template Week ─────────────────────────────────────
+const TEMPLATE_WEEK_KEY = '__template__'
+
+export async function saveWeekAsTemplate(sourceWeekKey: string) {
+  const sourceBookings = db.select().from(bookings).where(eq(bookings.weekKey, sourceWeekKey)).all()
+  await db.delete(bookings).where(eq(bookings.weekKey, TEMPLATE_WEEK_KEY))
+  for (const b of sourceBookings) {
+    await db.insert(bookings).values({
+      roomId: b.roomId,
+      weekKey: TEMPLATE_WEEK_KEY,
+      dayIndex: b.dayIndex,
+      slot: b.slot,
+      organisation: b.organisation,
+      comment: b.comment,
+    })
+  }
+  revalidatePath('/')
+  return sourceBookings.length
+}
+
+export async function applyTemplateToWeek(targetWeekKey: string) {
+  if (targetWeekKey === TEMPLATE_WEEK_KEY) return 0
+  const templateBookings = db.select().from(bookings).where(eq(bookings.weekKey, TEMPLATE_WEEK_KEY)).all()
+  if (templateBookings.length === 0) return 0
+
+  await db.delete(bookings).where(eq(bookings.weekKey, targetWeekKey))
+  for (const b of templateBookings) {
+    await db.insert(bookings).values({
+      roomId: b.roomId,
+      weekKey: targetWeekKey,
+      dayIndex: b.dayIndex,
+      slot: b.slot,
+      organisation: b.organisation,
+      comment: b.comment,
+    })
+  }
+  revalidatePath('/')
+  return templateBookings.length
+}
+
+export async function hasTemplate(): Promise<boolean> {
+  const row = db.select().from(bookings).where(eq(bookings.weekKey, TEMPLATE_WEEK_KEY)).get()
+  return Boolean(row)
 }
 
 // ── Copy Week ─────────────────────────────────────────
@@ -114,6 +164,7 @@ export async function copyPreviousWeek(targetWeekKey: string, sourceWeekKey: str
       dayIndex: b.dayIndex,
       slot: b.slot,
       organisation: b.organisation,
+      comment: b.comment,
     })
   }
   revalidatePath('/')
@@ -154,7 +205,7 @@ export async function deleteOrganisation(id: string) {
 }
 
 export async function getOrgBookingCounts(): Promise<Record<string, number>> {
-  const rows = db.select({ organisation: bookings.organisation }).from(bookings).all()
+  const rows = db.select({ organisation: bookings.organisation }).from(bookings).where(ne(bookings.weekKey, '__template__')).all()
   const counts: Record<string, number> = {}
   for (const r of rows) {
     counts[r.organisation] = (counts[r.organisation] || 0) + 1

@@ -15,6 +15,7 @@ interface Props {
   onMoveBooking: (bookingId: string, roomId: string, dayIndex: number, slot: number) => void
   onDeleteRoom: (id: string) => void
   onUpdateCapacity: (id: string, capacity: number | null) => void
+  onUpdateComment?: (id: string, comment: string | null) => void
 }
 
 const FLOORS_ORDER = ['RDC', 'R+1', 'R+2', 'R+3']
@@ -66,7 +67,7 @@ function CapacityEditor({ room, onSave }: { room: Room; onSave: (capacity: numbe
   )
 }
 
-export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotClick, onDeleteBooking, onMoveBooking, onDeleteRoom, onUpdateCapacity }: Props) {
+export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotClick, onDeleteBooking, onMoveBooking, onDeleteRoom, onUpdateCapacity, onUpdateComment }: Props) {
   const monday = parseWeekKey(weekKey)
   const days = getWeekDays(monday)
   const todayKey = getWeekKey(new Date())
@@ -164,9 +165,9 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                 )}
 
                 {/* Room name */}
-                <div className="group/room border-r border-b border-border px-2 sm:px-2.5 py-1.5 flex items-center gap-1">
-                  <div className="min-w-0">
-                    <div className="text-[12px] sm:text-[13px] font-medium whitespace-nowrap">{room.name}</div>
+                <div className="group/room border-r border-b border-border p-1 flex items-center gap-1 relative">
+                  <div className="flex-1 min-w-0 bg-accent/10 text-ink rounded-md px-2 py-1 flex flex-col items-center text-center">
+                    <div className="text-[12px] sm:text-[13px] font-medium leading-tight break-words" style={{ wordBreak: 'break-word' }}>{room.name}</div>
                     <CapacityEditor
                       room={room}
                       onSave={(capacity) => onUpdateCapacity(room.id, capacity)}
@@ -174,7 +175,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                   </div>
                   <button
                     onClick={() => onDeleteRoom(room.id)}
-                    className="sm:opacity-0 sm:group-hover/room:opacity-100 transition-opacity text-muted hover:text-red-500 flex-shrink-0 ml-auto"
+                    className="sm:opacity-0 sm:group-hover/room:opacity-100 transition-opacity text-muted hover:text-red-500 flex-shrink-0 absolute top-0.5 right-0.5"
                     aria-label={`Supprimer ${room.name}`}
                   >
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l6 6M9 3l-6 6"/></svg>
@@ -201,6 +202,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                         onClick={() => onSlotClick(room.id, dayIndex, 0)}
                         onDeleteBooking={onDeleteBooking}
                         onMoveBooking={onMoveBooking}
+                        onUpdateComment={onUpdateComment}
                       />
                       <SlotCell
                         bookings={afternoonBookings}
@@ -214,6 +216,7 @@ export function PlanningGrid({ rooms, bookings, weekKey, customColors, onSlotCli
                         onClick={() => onSlotClick(room.id, dayIndex, 1)}
                         onDeleteBooking={onDeleteBooking}
                         onMoveBooking={onMoveBooking}
+                        onUpdateComment={onUpdateComment}
                       />
                     </div>
                   )

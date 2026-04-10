@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logout } from '@/server/auth'
 
-interface Tab { href: string; label: string; icon?: React.ReactNode }
+interface Tab { href: string; label: string }
 
 const ADMIN_TABS: Tab[] = [
   { href: '/', label: 'Salles' },
@@ -12,11 +12,11 @@ const ADMIN_TABS: Tab[] = [
   { href: '/equipe', label: 'Créer planning' },
   { href: '/partenaires', label: 'Partenaires' },
   { href: '/stats', label: 'Statistiques' },
-  { href: '/admin/users', label: 'Comptes' },
+  { href: '/admin/equipe', label: 'Équipe' },
 ]
 
 const EMPLOYEE_TABS: Tab[] = [
-  { href: '/profil', label: 'Mon planning', icon: <IconCalendar /> },
+  { href: '/', label: 'Salles' },
 ]
 
 interface Props { role: string; username: string }
@@ -46,7 +46,7 @@ export function Nav({ role, username }: Props) {
                   <rect x="3" y="6.5" width="10" height="3" rx="0.5" fill="white"/>
                 </svg>
               </div>
-              <span className="text-[14px] font-semibold text-ink">Mon planning</span>
+              <span className="text-[14px] font-semibold text-ink">Planning des salles</span>
             </div>
             <button
               onClick={() => logout()}
@@ -109,12 +109,3 @@ export function Nav({ role, username }: Props) {
   )
 }
 
-function IconCalendar() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="14" height="13" rx="2" />
-      <path d="M3 8h14" />
-      <path d="M7 2v3M13 2v3" />
-    </svg>
-  )
-}

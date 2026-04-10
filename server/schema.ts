@@ -16,6 +16,7 @@ export const bookings = sqliteTable('bookings', {
   dayIndex:     integer('day_index').notNull(),
   slot:         integer('slot').notNull(),
   organisation: text('organisation').notNull(),
+  comment:      text('comment'),
 })
 
 // ── Equipe ─────────────────────────────────────────────

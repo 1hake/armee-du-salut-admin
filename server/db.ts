@@ -12,6 +12,8 @@ function createTables(sqlite: InstanceType<typeof Database>) {
   try { sqlite.exec('ALTER TABLE schedule_entries ADD COLUMN shift_code TEXT') } catch {}
   // Drop unique constraint on bookings to allow multiple bookings per slot
   try { sqlite.exec('DROP INDEX IF EXISTS bookings_uniq') } catch {}
+  // Add comment column to bookings if missing
+  try { sqlite.exec('ALTER TABLE bookings ADD COLUMN comment TEXT') } catch {}
 
   sqlite.exec(`
     CREATE TABLE IF NOT EXISTS rooms (

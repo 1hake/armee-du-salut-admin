@@ -4,16 +4,19 @@ import { parseWeekKey, getWeekDays, fmtWeekLabel } from '@/lib/weekUtils'
 
 interface Props {
   weekKey: string
+  hasTemplate: boolean
   onPrev: () => void
   onNext: () => void
   onToday: () => void
   onAddRoom: () => void
   onCopyPrevWeek: () => void
+  onSaveAsTemplate: () => void
+  onApplyTemplate: () => void
   onExportExcel: () => void
   onPrint: () => void
 }
 
-export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrevWeek, onExportExcel, onPrint }: Props) {
+export function Header({ weekKey, hasTemplate, onPrev, onNext, onToday, onAddRoom, onCopyPrevWeek, onSaveAsTemplate, onApplyTemplate, onExportExcel, onPrint }: Props) {
   const monday = parseWeekKey(weekKey)
   const days = getWeekDays(monday)
   const label = fmtWeekLabel(days)
@@ -68,6 +71,23 @@ export function Header({ weekKey, onPrev, onNext, onToday, onAddRoom, onCopyPrev
             title="Copier les réservations de la semaine précédente"
           >
             Copier sem. préc.
+          </button>
+
+          <button
+            onClick={onSaveAsTemplate}
+            className="px-3.5 py-1.5 text-[13px] font-medium rounded-full border border-border hover:bg-surface transition-colors active:scale-95"
+            title="Enregistrer cette semaine comme modèle"
+          >
+            Définir modèle
+          </button>
+
+          <button
+            onClick={onApplyTemplate}
+            disabled={!hasTemplate}
+            className="px-3.5 py-1.5 text-[13px] font-medium rounded-full border border-border hover:bg-surface transition-colors active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            title={hasTemplate ? 'Appliquer le modèle à cette semaine' : 'Aucun modèle enregistré'}
+          >
+            Appliquer modèle
           </button>
 
           <button
